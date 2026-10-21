@@ -1,0 +1,16 @@
+# Ignore compiled binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Ignore test project folders
+projek-pertamaku/
+projek-kedua/
+projek-*/
+
+# Ignore OS/IDE files
+.DS_Store
+.vscode/
+.idea/
