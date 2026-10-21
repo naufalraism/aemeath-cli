@@ -1,0 +1,33 @@
+package handlers
+
+import (
+	"github.com/naufalraism/aemeath"
+)
+
+// {{.Name}} adalah model untuk entitas {{.Name}}.
+type {{.Name}} struct {
+	ID   int    `json:"id"`
+	Name string `json:"name" validate:"required"`
+}
+
+// {{.Name}}In adalah request body untuk membuat {{.Name}} baru.
+type {{.Name}}In struct {
+	Name string `json:"name" validate:"required"`
+}
+
+// {{.Name}}Handler mengelola rute untuk {{.Name}}.
+func {{.Name}}Handler(app *aemeath.App) {
+	group := app.Group("/{{.LowerName}}s")
+
+	// POST /{{.LowerName}}s
+	aemeath.GroupPOST(group, "/", func(c *aemeath.Ctx, in {{.Name}}In) ({{.Name}}, error) {
+		// TODO: Simpan ke database
+		return {{.Name}}{ID: 1, Name: in.Name}, nil
+	}, aemeath.Summary("Buat {{.Name}} baru"))
+
+	// GET /{{.LowerName}}s
+	aemeath.GroupGET(group, "/", func(c *aemeath.Ctx, _ struct{}) ([]{{.Name}}, error) {
+		// TODO: Ambil dari database
+		return []{{.Name}}{}, nil
+	}, aemeath.Summary("Ambil semua {{.Name}}"))
+}

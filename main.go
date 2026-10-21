@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"text/template"
 
@@ -118,16 +119,71 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(newCmd, devCmd)
+	// Command: `aemeath generate api [Nama]`
+	var generateCmd = &cobra.Command{
+		Use:   "generate api [Nama]",
+		Short: "Generate file handler API baru",
+		Args:  cobra.ExactArgs(2), // Butuh 2 argumen: "api" dan "Nama"
+		Run: func(cmd *cobra.Command, args []string) {
+			if args[0] != "api" {
+				fmt.Println("❌ Hanya mendukung 'api' untuk saat ini. Contoh: aemeath generate api Product")
+				return
+			}
+
+			name := args[1]
+			// Kapitalisasi huruf pertama (misal: product -> Product)
+			capitalizedName := strings.ToUpper(name[:1]) + name[1:]
+			lowerName := strings.ToLower(capitalizedName)
+
+			// Buat folder handlers jika belum ada
+			os.Mkdir("handlers", 0755)
+
+			// Siapkan data untuk template
+			data := struct {
+				Name      string
+				LowerName string
+			}{
+				Name:      capitalizedName,
+				LowerName: lowerName,
+			}
+
+			// Render template
+			destPath := filepath.Join("handlers", lowerName+".go")
+			renderTemplate("templates/handler.go.tmpl", destPath, data)
+
+			fmt.Printf("✨ File handler untuk '%s' berhasil dibuat di %s\n", capitalizedName, destPath)
+			fmt.Printf("👉 Jangan lupa panggil handlers.%sHandler(app) di main.go kamu!\n", capitalizedName)
+		},
+	}
+
+	rootCmd.AddCommand(newCmd, devCmd, generateCmd)
 	rootCmd.Execute()
 }
 
 func renderTemplate(tmplPath, destPath string, data any) {
-	content, _ := templateFS.ReadFile(tmplPath)
-	tmpl, _ := template.New("").Parse(string(content))
-	file, _ := os.Create(destPath)
+	content, err := templateFS.ReadFile(tmplPath)
+	if err != nil {
+		fmt.Println("❌ Gagal baca template:", err)
+		return
+	}
+
+	tmpl, err := template.New("").Parse(string(content))
+	if err != nil {
+		fmt.Println("❌ Gagal parse template:", err)
+		return
+	}
+
+	file, err := os.Create(destPath)
+	if err != nil {
+		fmt.Println("❌ Gagal buat file:", err)
+		return
+	}
 	defer file.Close()
-	tmpl.Execute(file, data)
+
+	err = tmpl.Execute(file, data)
+	if err != nil {
+		fmt.Println("❌ Gagal eksekusi template:", err)
+	}
 }
 
 func runApp() *exec.Cmd {
