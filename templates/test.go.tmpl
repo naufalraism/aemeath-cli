@@ -1,0 +1,27 @@
+package handlers_test
+
+import (
+	"net/http/httptest"
+	"testing"
+
+	"github.com/naufalraism/aemeath"
+)
+
+func Test{{.Name}}Handler(t *testing.T) {
+	app := aemeath.New()
+	
+	// TODO: Daftarkan handler {{.Name}} kamu di sini
+	// aemeath.GET(app, "/{{.LowerName}}", func(c *aemeath.Ctx, _ struct{}) (map[string]string, error) {
+	// 	return map[string]string{"status": "ok"}, nil
+	// })
+
+	req := httptest.NewRequest("GET", "/{{.LowerName}}", nil)
+	rec := httptest.NewRecorder()
+
+	app.ServeHTTP(rec, req)
+
+	// Contoh assertion dasar
+	if rec.Code != 200 {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+}

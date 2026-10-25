@@ -12,6 +12,7 @@ import (
 	"strings"
 	"syscall"
 	"text/template"
+	"unicode"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
@@ -52,10 +53,9 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("⚡ Memulai Aemeath Dev Server (Hot Reload)...")
 
-			// FIX 1: Simpan proses pertama ke dalam variabel appProcess
 			appProcess := runApp()
 
-			// FIX 2: Tangkap sinyal Ctrl+C agar server mati dengan rapi
+			// Tangkap sinyal Ctrl+C agar server mati dengan rapi
 			c := make(chan os.Signal, 1)
 			signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 			go func() {
@@ -81,7 +81,7 @@ func main() {
 
 			// Pantau folder saat ini dan sub-foldernya
 			filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
-				if info.IsDir() && info.Name() != ".git" {
+				if info.IsDir() && info.Name() != ".git" && info.Name() != "node_modules" {
 					watcher.Add(path)
 				}
 				return nil
@@ -119,45 +119,134 @@ func main() {
 		},
 	}
 
-	// Command: `aemeath generate api [Nama]`
+	// Command: `aemeath generate`
 	var generateCmd = &cobra.Command{
-		Use:   "generate api [Nama]",
+		Use:   "generate",
+		Short: "Generate berbagai komponen (api, model, middleware, docker, test, job)",
+	}
+
+	// Subcommand: `aemeath generate api <Nama>`
+	var generateApiCmd = &cobra.Command{
+		Use:   "api [Nama]",
 		Short: "Generate file handler API baru",
-		Args:  cobra.ExactArgs(2), // Butuh 2 argumen: "api" dan "Nama"
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			if args[0] != "api" {
-				fmt.Println("❌ Hanya mendukung 'api' untuk saat ini. Contoh: aemeath generate api Product")
-				return
-			}
-
-			name := args[1]
-			// Kapitalisasi huruf pertama (misal: product -> Product)
-			capitalizedName := strings.ToUpper(name[:1]) + name[1:]
-			lowerName := strings.ToLower(capitalizedName)
-
-			// Buat folder handlers jika belum ada
-			os.Mkdir("handlers", 0755)
-
-			// Siapkan data untuk template
-			data := struct {
-				Name      string
-				LowerName string
-			}{
-				Name:      capitalizedName,
-				LowerName: lowerName,
-			}
-
-			// Render template
+			name := capitalize(args[0])
+			lowerName := strings.ToLower(name)
+			_ = os.Mkdir("handlers", 0755)
 			destPath := filepath.Join("handlers", lowerName+".go")
+
+			data := struct{ Name, LowerName string }{Name: name, LowerName: lowerName}
 			renderTemplate("templates/handler.go.tmpl", destPath, data)
 
-			fmt.Printf("✨ File handler untuk '%s' berhasil dibuat di %s\n", capitalizedName, destPath)
-			fmt.Printf("👉 Jangan lupa panggil handlers.%sHandler(app) di main.go kamu!\n", capitalizedName)
+			fmt.Printf("✨ File handler untuk '%s' dibuat di %s\n", name, destPath)
 		},
 	}
 
+	// Subcommand: `aemeath generate model <Nama>`
+	var generateModelCmd = &cobra.Command{
+		Use:   "model [Nama]",
+		Short: "Generate file struct database (GORM)",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			name := capitalize(args[0])
+			lowerName := strings.ToLower(name)
+			_ = os.Mkdir("models", 0755)
+			destPath := filepath.Join("models", lowerName+".go")
+
+			data := struct{ Name string }{Name: name}
+			renderTemplate("templates/model.go.tmpl", destPath, data)
+
+			fmt.Printf("✨ File model untuk '%s' dibuat di %s\n", name, destPath)
+		},
+	}
+
+	// Subcommand: `aemeath generate middleware <Nama>`
+	var generateMiddlewareCmd = &cobra.Command{
+		Use:   "middleware [Nama]",
+		Short: "Generate file middleware baru",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			name := capitalize(args[0])
+			lowerName := strings.ToLower(name)
+			_ = os.Mkdir("middleware", 0755)
+			destPath := filepath.Join("middleware", lowerName+".go")
+
+			data := struct{ Name string }{Name: name}
+			renderTemplate("templates/middleware.go.tmpl", destPath, data)
+
+			fmt.Printf("✨ File middleware untuk '%s' dibuat di %s\n", name, destPath)
+			fmt.Printf("👉 Jangan lupa panggil middleware.%sMiddleware() di main.go kamu!\n", name)
+		},
+	}
+
+	// Subcommand: `aemeath generate docker`
+	var generateDockerCmd = &cobra.Command{
+		Use:   "docker",
+		Short: "Generate Dockerfile dan docker-compose.yml",
+		Args:  cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			renderTemplate("templates/Dockerfile.tmpl", "Dockerfile", nil)
+			fmt.Println("✨ File 'Dockerfile' berhasil dibuat!")
+
+			renderTemplate("templates/docker-compose.yml.tmpl", "docker-compose.yml", nil)
+			fmt.Println("✨ File 'docker-compose.yml' berhasil dibuat!")
+
+			fmt.Println("👉 Jalankan: docker-compose up --build")
+		},
+	}
+
+	// Subcommand: `aemeath generate test <Nama>`
+	var generateTestCmd = &cobra.Command{
+		Use:   "test [Nama]",
+		Short: "Generate file unit test untuk handler",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			name := capitalize(args[0])
+			lowerName := strings.ToLower(name)
+			_ = os.Mkdir("handlers", 0755)
+			destPath := filepath.Join("handlers", lowerName+"_test.go")
+
+			data := struct{ Name, LowerName string }{Name: name, LowerName: lowerName}
+			renderTemplate("templates/test.go.tmpl", destPath, data)
+
+			fmt.Printf("✨ File test untuk '%s' dibuat di %s\n", name, destPath)
+			fmt.Println("👉 Jalankan: go test ./...")
+		},
+	}
+
+	// Subcommand: `aemeath generate job <Nama>`
+	var generateJobCmd = &cobra.Command{
+		Use:   "job [Nama]",
+		Short: "Generate file background job baru",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			name := capitalize(args[0])
+			lowerName := strings.ToLower(name)
+			_ = os.Mkdir("jobs", 0755)
+			destPath := filepath.Join("jobs", lowerName+".go")
+
+			data := struct{ Name string }{Name: name}
+			renderTemplate("templates/job.go.tmpl", destPath, data)
+
+			fmt.Printf("✨ File job untuk '%s' dibuat di %s\n", name, destPath)
+		},
+	}
+
+	generateCmd.AddCommand(generateApiCmd, generateModelCmd, generateMiddlewareCmd, generateDockerCmd, generateTestCmd, generateJobCmd)
 	rootCmd.AddCommand(newCmd, devCmd, generateCmd)
 	rootCmd.Execute()
+}
+
+// --- Fungsi Helper ---
+
+func capitalize(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	r := []rune(s)
+	r[0] = unicode.ToUpper(r[0])
+	return string(r)
 }
 
 func renderTemplate(tmplPath, destPath string, data any) {

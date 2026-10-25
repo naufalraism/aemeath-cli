@@ -1,0 +1,23 @@
+package jobs
+
+import (
+	"log"
+)
+
+// {{.Name}}Job adalah struct data untuk background job.
+type {{.Name}}Job struct {
+	// TODO: Tambahkan field yang dibutuhkan di sini
+	// Contoh: UserID int
+	// Contoh: Email  string
+}
+
+// Handle mengeksekusi logika utama job ini.
+// Fungsi ini akan dijalankan di belakang layar (background).
+func (j *{{.Name}}Job) Handle() error {
+	log.Println("⚙️  Menjalankan job: {{.Name}}")
+
+	// TODO: Implementasikan logika job di sini
+	// Contoh: kirim email, resize gambar, generate PDF, dll.
+
+	return nil
+}
