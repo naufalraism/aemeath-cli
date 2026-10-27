@@ -1,4 +1,5 @@
 # Aemeath CLI 🚀
+[![Go](https://github.com/naufalraism/aemeath-cli/actions/workflows/go.yml/badge.svg)](https://github.com/naufalraism/aemeath-cli/actions/workflows/go.yml)
 
 The official command line interface for the [Aemeath Go framework](https://github.com/naufalraism/aemeath).
 
