@@ -1,16 +1,17 @@
-# Ignore compiled binaries
+# Compiled binaries
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
+/aemeath
+/aemeath-cli
+/bin/
 
-# Ignore test project folders
-projek-pertamaku/
-projek-kedua/
-projek-*/
+# Projects created while testing the CLI
+/tmp-projects/
 
-# Ignore OS/IDE files
+# OS / IDE files
 .DS_Store
 .vscode/
 .idea/
