@@ -1,23 +1,34 @@
 package jobs
 
 import (
+	"context"
 	"log"
 )
 
-// {{.Name}}Job adalah struct data untuk background job.
-type {{.Name}}Job struct {
-	// TODO: Tambahkan field yang dibutuhkan di sini
-	// Contoh: UserID int
-	// Contoh: Email  string
+// {{.Pascal}}Job carries the data for a background job.
+type {{.Pascal}}Job struct {
+	// TODO: add the fields the job needs.
+	// Example: UserID int
+	// Example: Email  string
 }
 
-// Handle mengeksekusi logika utama job ini.
-// Fungsi ini akan dijalankan di belakang layar (background).
-func (j *{{.Name}}Job) Handle() error {
-	log.Println("⚙️  Menjalankan job: {{.Name}}")
+// Handle runs the job. It stops early when ctx is cancelled.
+//
+// Run it in the background, and never drop its error:
+//
+//	go func() {
+//		if err := (&jobs.{{.Pascal}}Job{}).Handle(ctx); err != nil {
+//			log.Printf("{{.Pascal}}Job failed: %v", err)
+//		}
+//	}()
+func (j *{{.Pascal}}Job) Handle(ctx context.Context) error {
+	log.Println("running job: {{.Pascal}}")
 
-	// TODO: Implementasikan logika job di sini
-	// Contoh: kirim email, resize gambar, generate PDF, dll.
-
+	// TODO: implement the job here (send an email, resize an image, ...).
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
 	return nil
 }

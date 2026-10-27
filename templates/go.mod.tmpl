@@ -1,7 +1,6 @@
-module {{.ModuleName}}
+module {{.Module}}
 
-go 1.27
-
-require github.com/naufalraism/aemeath v0.1.0
-
-replace github.com/naufalraism/aemeath => "../../Aemeath Go"
+go {{.GoVersion}}
+{{if .Replace}}
+replace github.com/naufalraism/aemeath => {{printf "%q" .Replace}}
+{{end}}

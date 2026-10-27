@@ -1,33 +1,106 @@
 package handlers
 
 import (
+	"sort"
+	"sync"
+
 	"github.com/naufalraism/aemeath"
 )
 
-// {{.Name}} adalah model untuk entitas {{.Name}}.
-type {{.Name}} struct {
+// {{.Pascal}} is the resource exposed by this API.
+//
+// The in-memory store below is a placeholder so the routes work out of the
+// box. Replace it with your database.
+type {{.Pascal}} struct {
 	ID   int    `json:"id"`
-	Name string `json:"name" validate:"required"`
+	Name string `json:"name"`
 }
 
-// {{.Name}}In adalah request body untuk membuat {{.Name}} baru.
-type {{.Name}}In struct {
-	Name string `json:"name" validate:"required"`
+// Create{{.Pascal}}In is the request body of POST /{{.Route}}.
+type Create{{.Pascal}}In struct {
+	Name string `json:"name" validate:"required,min=1,max=100"`
 }
 
-// {{.Name}}Handler mengelola rute untuk {{.Name}}.
-func {{.Name}}Handler(app *aemeath.App) {
-	group := app.Group("/{{.LowerName}}s")
+// {{.Pascal}}ByIDIn selects one {{.Pascal}} through the {id} path parameter.
+type {{.Pascal}}ByIDIn struct {
+	ID int `path:"id"`
+}
 
-	// POST /{{.LowerName}}s
-	aemeath.GroupPOST(group, "/", func(c *aemeath.Ctx, in {{.Name}}In) ({{.Name}}, error) {
-		// TODO: Simpan ke database
-		return {{.Name}}{ID: 1, Name: in.Name}, nil
-	}, aemeath.Summary("Buat {{.Name}} baru"))
+// Update{{.Pascal}}In is the request of PUT /{{.Route}}/{id}.
+type Update{{.Pascal}}In struct {
+	ID   int    `path:"id"`
+	Name string `json:"name" validate:"required,min=1,max=100"`
+}
 
-	// GET /{{.LowerName}}s
-	aemeath.GroupGET(group, "/", func(c *aemeath.Ctx, _ struct{}) ([]{{.Name}}, error) {
-		// TODO: Ambil dari database
-		return []{{.Name}}{}, nil
-	}, aemeath.Summary("Ambil semua {{.Name}}"))
+type {{.Camel}}Store struct {
+	mu     sync.RWMutex
+	nextID int
+	items  map[int]{{.Pascal}}
+}
+
+func new{{.Pascal}}Store() *{{.Camel}}Store {
+	return &{{.Camel}}Store{nextID: 1, items: map[int]{{.Pascal}}{}}
+}
+
+// {{.Pascal}}Handler registers the CRUD routes for {{.Pascal}} under /{{.Route}}.
+func {{.Pascal}}Handler(app *aemeath.App) {
+	store := new{{.Pascal}}Store()
+	group := app.Group("/{{.Route}}")
+
+	// GET /{{.Route}}
+	aemeath.GroupGET(group, "/", func(c *aemeath.Ctx, _ struct{}) ([]{{.Pascal}}, error) {
+		store.mu.RLock()
+		defer store.mu.RUnlock()
+		out := make([]{{.Pascal}}, 0, len(store.items))
+		for _, item := range store.items {
+			out = append(out, item)
+		}
+		sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+		return out, nil
+	}, aemeath.Summary("List {{.Pascal}} items"), aemeath.Tags("{{.Pascal}}"))
+
+	// POST /{{.Route}}
+	aemeath.GroupPOST(group, "/", func(c *aemeath.Ctx, in Create{{.Pascal}}In) ({{.Pascal}}, error) {
+		store.mu.Lock()
+		defer store.mu.Unlock()
+		item := {{.Pascal}}{ID: store.nextID, Name: in.Name}
+		store.items[item.ID] = item
+		store.nextID++
+		return item, nil
+	}, aemeath.Summary("Create a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"), aemeath.Status(201))
+
+	// GET /{{.Route}}/{id}
+	aemeath.GroupGET(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) ({{.Pascal}}, error) {
+		store.mu.RLock()
+		defer store.mu.RUnlock()
+		item, ok := store.items[in.ID]
+		if !ok {
+			return {{.Pascal}}{}, aemeath.NotFound("{{.Pascal}} not found")
+		}
+		return item, nil
+	}, aemeath.Summary("Get a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"))
+
+	// PUT /{{.Route}}/{id}
+	aemeath.GroupPUT(group, "/{id}", func(c *aemeath.Ctx, in Update{{.Pascal}}In) ({{.Pascal}}, error) {
+		store.mu.Lock()
+		defer store.mu.Unlock()
+		item, ok := store.items[in.ID]
+		if !ok {
+			return {{.Pascal}}{}, aemeath.NotFound("{{.Pascal}} not found")
+		}
+		item.Name = in.Name
+		store.items[in.ID] = item
+		return item, nil
+	}, aemeath.Summary("Update a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"))
+
+	// DELETE /{{.Route}}/{id}
+	aemeath.GroupDELETE(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) (struct{}, error) {
+		store.mu.Lock()
+		defer store.mu.Unlock()
+		if _, ok := store.items[in.ID]; !ok {
+			return struct{}{}, aemeath.NotFound("{{.Pascal}} not found")
+		}
+		delete(store.items, in.ID)
+		return struct{}{}, nil
+	}, aemeath.Summary("Delete a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"), aemeath.Status(204))
 }

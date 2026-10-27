@@ -4,13 +4,13 @@ import (
 	"github.com/naufalraism/aemeath"
 )
 
-// {{.Name}}Middleware adalah middleware kustom.
-func {{.Name}}Middleware() aemeath.Middleware {
+// {{.Pascal}}Middleware is a custom middleware.
+func {{.Pascal}}Middleware() aemeath.Middleware {
 	return func(next aemeath.HandlerFunc) aemeath.HandlerFunc {
 		return func(c *aemeath.Ctx) error {
-			// TODO: Implementasikan logika middleware di sini
-			// Contoh: c.W.Header().Set("X-Custom", "Value")
-			
+			// TODO: add your logic before the handler runs.
+			// Example: c.W.Header().Set("X-Custom", "value")
+
 			return next(c)
 		}
 	}

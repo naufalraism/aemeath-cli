@@ -1,10 +1,10 @@
-version: '3.8'
-
 services:
   app:
     build: .
     ports:
       - "3000:3000"
-    env_file:
-      - .env
+    environment:
+      PORT: "3000"
+      # Put secrets in a .env file and uncomment:
+      # env_file: .env
     restart: unless-stopped

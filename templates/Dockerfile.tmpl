@@ -1,28 +1,26 @@
-# Stage 1: Build
-FROM golang:1.27-alpine AS builder
+# syntax=docker/dockerfile:1
 
-WORKDIR /app
+# Stage 1: build
+FROM golang:{{.GoVersion}}-alpine AS builder
+WORKDIR /src
 
-# Copy go.mod and go.sum
+# Download dependencies first so Docker can cache this layer.
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the rest of the source code
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/app .
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main .
-
-# Stage 2: Run
-FROM alpine:latest
-
+# Stage 2: run
+FROM alpine:3
+RUN apk add --no-cache ca-certificates tzdata \
+ && addgroup -S app && adduser -S -G app app
 WORKDIR /app
+COPY --from=builder /out/app .
 
-# Copy the binary from the builder stage
-COPY --from=builder /app/main .
+# Do not run as root.
+USER app
 
-# Expose port (adjust if your app uses a different port)
+# Adjust if your app listens on a different port (the PORT variable).
 EXPOSE 3000
-
-# Run the app
-CMD ["./main"]
+ENTRYPOINT ["./app"]

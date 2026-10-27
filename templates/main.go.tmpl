@@ -2,17 +2,46 @@ package main
 
 import (
 	"log"
+	"os"
+
 	"github.com/naufalraism/aemeath"
 )
+
+// HelloOut is the response of GET /.
+type HelloOut struct {
+	Message string `json:"message"`
+}
 
 func main() {
 	app := aemeath.New()
 
-	aemeath.GET(app, "/", func(c *aemeath.Ctx, _ struct{}) (map[string]string, error) {
-		return map[string]string{"message": "Halo dari Aemeath CLI!"}, nil
-	})
+	app.Use(
+		aemeath.SecurityHeaders(),
+		aemeath.RequestID(),
+		aemeath.Logger(),
+		aemeath.Recover(),
+		aemeath.CORS(),
+		aemeath.Gzip(),
+	)
 
-	app.EnableDocs(aemeath.Info{Title: "Aemeath Project", Version: "1.0.0"})
-	log.Println("🚀 Server berjalan di http://localhost:3000")
-	log.Fatal(app.Listen(":3000"))
+	// GET /healthz (liveness) and GET /readyz (readiness) for load balancers.
+	app.EnableHealth()
+
+	aemeath.GET(app, "/", func(c *aemeath.Ctx, _ struct{}) (HelloOut, error) {
+		return HelloOut{Message: "Hello from Aemeath!"}, nil
+	}, aemeath.Summary("Say hello"))
+
+	// Interactive API docs at /docs. /client.ts, /schemas.ts (Zod) and /hooks.ts
+	// (React Query) are generated from the same Go types.
+	app.EnableDocs(aemeath.Info{Title: "{{.Title}}", Version: "0.1.0"})
+	app.EnableClient()
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+	log.Printf("server listening on http://localhost:%s (docs: /docs)", port)
+	if err := app.Listen(":" + port); err != nil {
+		log.Fatal(err)
+	}
 }
