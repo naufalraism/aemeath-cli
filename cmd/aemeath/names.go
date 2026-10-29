@@ -49,7 +49,10 @@ func parseName(raw string) (Names, error) {
 
 	var pascal strings.Builder
 	for _, w := range words {
-		pascal.WriteString(strings.ToUpper(w[:1]) + strings.ToLower(w[1:]))
+		if len(w) > 0 {
+			pascal.WriteString(strings.ToUpper(w[:1]))
+			pascal.WriteString(strings.ToLower(w[1:]))
+		}
 	}
 	p := pascal.String()
 

@@ -99,7 +99,7 @@ func TestDevReloadsAndFreesThePort(t *testing.T) {
 	dir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module devtest\n\ngo 1.22\n"), 0o644)
 	mainGo := filepath.Join(dir, "main.go")
-	_ = os.WriteFile(mainGo, []byte(fmt.Sprintf(devServerSource, "v1")), 0o644)
+	_ = os.WriteFile(mainGo, fmt.Appendf(nil, devServerSource, "v1"), 0644)
 
 	port := freePort(t)
 	t.Setenv("PORT", port)
@@ -114,7 +114,7 @@ func TestDevReloadsAndFreesThePort(t *testing.T) {
 	waitFor(t, "v1 to be served", func() bool { return fetch(port) == "v1" })
 
 	// 1. A source change restarts the server on the SAME port.
-	_ = os.WriteFile(mainGo, []byte(fmt.Sprintf(devServerSource, "v2")), 0o644)
+	_ = os.WriteFile(mainGo, fmt.Appendf(nil, devServerSource, "v2"), 0644)
 	waitFor(t, "v2 to be served (the old server must have released the port)", func() bool { return fetch(port) == "v2" })
 
 	// 2. A broken build keeps v2 running.
@@ -125,7 +125,7 @@ func TestDevReloadsAndFreesThePort(t *testing.T) {
 	}
 
 	// 3. Fixing the build gets the new version running again.
-	_ = os.WriteFile(mainGo, []byte(fmt.Sprintf(devServerSource, "v3")), 0o644)
+	_ = os.WriteFile(mainGo, fmt.Appendf(nil, devServerSource, "v3"), 0644)
 	waitFor(t, "v3 to be served after fixing the build", func() bool { return fetch(port) == "v3" })
 
 	cancel()
