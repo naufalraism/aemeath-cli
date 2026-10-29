@@ -1,15 +1,18 @@
 # Aemeath CLI 🚀
+
 [![Go](https://github.com/naufalraism/aemeath-cli/actions/workflows/go.yml/badge.svg)](https://github.com/naufalraism/aemeath-cli/actions/workflows/go.yml)
 
 The official command line interface for the [Aemeath Go framework](https://github.com/naufalraism/aemeath).
 
 ## 📦 Installation
 
+Install the CLI globally using Go:
+
 ```bash
-go install github.com/naufalraism/aemeath-cli@latest
+go install github.com/naufalraism/aemeath-cli/cmd/aemeath@latest
 ```
 
-The binary is named after the module, so rename it or alias it to `aemeath`. Make sure `$(go env GOPATH)/bin` is in your `PATH`. The CLI requires the Go toolchain to be installed (it runs `go build` and `go mod tidy`).
+Make sure `$(go env GOPATH)/bin` is in your `PATH`. The CLI requires the Go toolchain to be installed (it runs `go build` and `go mod tidy`).
 
 ## 🛠️ Commands
 
@@ -79,6 +82,6 @@ go test -race ./...
 go test -short ./...   # skips the hot-reload test, which builds Go programs
 ```
 
-## 📝 License
+## 📄 License
 
-MIT License.
+MIT License. See [LICENSE](LICENSE).
