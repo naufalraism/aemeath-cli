@@ -15,3 +15,6 @@
 .DS_Store
 .vscode/
 .idea/
+
+# GoReleaser output
+/dist/

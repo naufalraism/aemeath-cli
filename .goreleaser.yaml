@@ -1,0 +1,45 @@
+# Builds the "aemeath" binary for Windows, macOS and Linux and attaches it to the
+# GitHub release when a v* tag is pushed (see .github/workflows/release.yml).
+# Validate locally with: goreleaser check
+version: 2
+
+project_name: aemeath
+
+builds:
+  - id: aemeath
+    main: ./cmd/aemeath
+    binary: aemeath
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X github.com/naufalraism/aemeath-cli/internal/cli.version={{ .Tag }}
+
+archives:
+  - id: aemeath
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: "aemeath_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+
+release:
+  # v0.x versions and tags with a suffix (v1.0.0-rc.1) are marked as pre-releases.
+  prerelease: auto

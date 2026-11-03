@@ -1,8 +1,25 @@
 # Changelog
 
-## [0.1.1] - 2026-10-29
+## Unreleased
+
+### Added (templates, wiring, jobs, releases)
+
+- **`aemeath new --template api|db|fullstack`.** `db` adds SQLite and a `Task` CRUD resource with tests that run against a real database; `fullstack` adds a Vite + React + TypeScript app in `web/` that uses the generated client, Zod schemas and hooks (generated for you), with a dev proxy and Go serving `web/dist` in production.
+- **`generate` now registers what it creates in `main.go`**, at the `// aemeath:plugins` and `// aemeath:handlers` comments of a new project (or before `app.Listen`). It only inserts lines, only into a `main.go` that parses, and leaves the file untouched and prints what to add when it cannot do it safely. `--no-wire` skips it.
+- `generate api` also writes the test file (`--no-test` skips it) and accepts `--db` (GORM + SQLite, a model, the database plugin) and `--prefix`.
+- **`generate job`** now works: jobs implement `Run(ctx)` and the command registers the framework's retrying job runner (`aemeath/jobs`).
+- `generate` checks every destination first and writes nothing if one already exists, instead of stopping half way.
+- GoReleaser configuration and a release workflow that publish `aemeath` binaries for Windows, macOS and Linux (amd64 and arm64) when a tag is pushed.
+- `aemeath --version` reports the module version when installed with `go install ...@v0.1.0`.
+- The Dockerfile builds `web/` for fullstack projects and lets the non-root user write the SQLite file.
+
+### Changed
+
+- **The command moved to `cmd/aemeath`**, so `go install github.com/naufalraism/aemeath-cli/cmd/aemeath@latest` installs a command named `aemeath` (it used to be `aemeath-cli`). The code lives in `internal/cli`; the old `go install github.com/naufalraism/aemeath-cli@latest` no longer works.
+- Generated tests and handlers use a route prefix when asked, and a database test uses a temporary SQLite file that it closes (Windows cannot delete an open database).
 
 ### Fixed
+
 
 - **`aemeath dev` left the server running** after a reload: it killed the `go run` process but not the server it had started, so the next restart failed with `address already in use` (the very problem the README promised to solve). It now builds a binary and runs it directly, and stops it with `SIGTERM`.
 - `aemeath dev` could crash with a nil pointer when a directory was unreadable, missed files saved by editors that write through a rename, restarted several times for one save, never noticed directories created later (for example `handlers/` after `generate api`), and always ran only `main.go` (`go run main.go`), which breaks as soon as the package has a second file.
