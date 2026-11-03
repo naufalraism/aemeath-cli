@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.2.0] - 2026-11-03
 
 ### Added (templates, wiring, jobs, releases)
 
