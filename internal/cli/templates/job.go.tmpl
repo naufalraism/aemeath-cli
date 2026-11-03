@@ -1,0 +1,44 @@
+package jobs
+
+import (
+	"context"
+	"log"
+)
+
+// {{.Pascal}}Job is a background job. Its fields are the data the job needs.
+type {{.Pascal}}Job struct {
+	// TODO: add the fields the job needs.
+	// Example: UserID int
+	// Example: Email  string
+}
+
+// Run does the work. ctx is cancelled when the server is forced to stop, so
+// long jobs should return when it is done. Returning an error makes the runner
+// retry the job (3 attempts by default, with exponential backoff).
+func (j *{{.Pascal}}Job) Run(ctx context.Context) error {
+	log.Println("running job: {{.Pascal}}")
+
+	// TODO: implement the job here (send an email, resize an image, ...).
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+	return nil
+}
+
+// Enqueue it from a handler (the runner is registered in main.go):
+//
+//	import aejobs "github.com/naufalraism/aemeath/jobs"
+//
+//	if err := aejobs.From(c).Enqueue(&jobs.{{.Pascal}}Job{}); err != nil {
+//		return err
+//	}
+//
+// or run it on a schedule at startup:
+//
+//	runner, _ := aemeath.Lookup[*aejobs.Runner](app)
+//	runner.Every(time.Hour, &jobs.{{.Pascal}}Job{})
+//
+// The queue lives in memory: jobs that are queued when the process crashes are
+// lost. For work that must never be lost, use a durable queue.

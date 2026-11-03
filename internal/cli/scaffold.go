@@ -1,10 +1,11 @@
-package main
+package cli
 
 import (
 	"bytes"
 	"embed"
 	"fmt"
 	"go/format"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -112,3 +113,22 @@ func parseGoVersion(s string) string {
 }
 
 var projectNameRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
+
+// outf and outln write user-facing output. A failed write to the terminal
+// (a closed pipe, for example) is not something the CLI can act on.
+func outf(w io.Writer, format string, a ...any) { _, _ = fmt.Fprintf(w, format, a...) }
+func outln(w io.Writer, a ...any)               { _, _ = fmt.Fprintln(w, a...) }
+
+// renderRaw reads an embedded file and replaces the given tokens, without
+// treating it as a Go template.
+func renderRaw(name string, replacements map[string]string) ([]byte, error) {
+	b, err := templateFS.ReadFile("templates/" + name)
+	if err != nil {
+		return nil, fmt.Errorf("reading template %s: %w", name, err)
+	}
+	s := string(b)
+	for token, value := range replacements {
+		s = strings.ReplaceAll(s, token, value)
+	}
+	return []byte(s), nil
+}

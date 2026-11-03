@@ -16,7 +16,7 @@ type {{.Pascal}} struct {
 	Name string `json:"name"`
 }
 
-// Create{{.Pascal}}In is the request body of POST /{{.Route}}.
+// Create{{.Pascal}}In is the request body of POST {{.Prefix}}/{{.Route}}.
 type Create{{.Pascal}}In struct {
 	Name string `json:"name" validate:"required,min=1,max=100"`
 }
@@ -26,7 +26,7 @@ type {{.Pascal}}ByIDIn struct {
 	ID int `path:"id"`
 }
 
-// Update{{.Pascal}}In is the request of PUT /{{.Route}}/{id}.
+// Update{{.Pascal}}In is the request of PUT {{.Prefix}}/{{.Route}}/{id}.
 type Update{{.Pascal}}In struct {
 	ID   int    `path:"id"`
 	Name string `json:"name" validate:"required,min=1,max=100"`
@@ -42,12 +42,12 @@ func new{{.Pascal}}Store() *{{.Camel}}Store {
 	return &{{.Camel}}Store{nextID: 1, items: map[int]{{.Pascal}}{}}
 }
 
-// {{.Pascal}}Handler registers the CRUD routes for {{.Pascal}} under /{{.Route}}.
+// {{.Pascal}}Handler registers the CRUD routes for {{.Pascal}} under {{.Prefix}}/{{.Route}}.
 func {{.Pascal}}Handler(app *aemeath.App) {
 	store := new{{.Pascal}}Store()
-	group := app.Group("/{{.Route}}")
+	group := app.Group("{{.Prefix}}/{{.Route}}")
 
-	// GET /{{.Route}}
+	// GET {{.Prefix}}/{{.Route}}
 	aemeath.GroupGET(group, "/", func(c *aemeath.Ctx, _ struct{}) ([]{{.Pascal}}, error) {
 		store.mu.RLock()
 		defer store.mu.RUnlock()
@@ -59,7 +59,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 		return out, nil
 	}, aemeath.Summary("List {{.Pascal}} items"), aemeath.Tags("{{.Pascal}}"))
 
-	// POST /{{.Route}}
+	// POST {{.Prefix}}/{{.Route}}
 	aemeath.GroupPOST(group, "/", func(c *aemeath.Ctx, in Create{{.Pascal}}In) ({{.Pascal}}, error) {
 		store.mu.Lock()
 		defer store.mu.Unlock()
@@ -69,7 +69,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 		return item, nil
 	}, aemeath.Summary("Create a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"), aemeath.Status(201))
 
-	// GET /{{.Route}}/{id}
+	// GET {{.Prefix}}/{{.Route}}/{id}
 	aemeath.GroupGET(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) ({{.Pascal}}, error) {
 		store.mu.RLock()
 		defer store.mu.RUnlock()
@@ -80,7 +80,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 		return item, nil
 	}, aemeath.Summary("Get a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"))
 
-	// PUT /{{.Route}}/{id}
+	// PUT {{.Prefix}}/{{.Route}}/{id}
 	aemeath.GroupPUT(group, "/{id}", func(c *aemeath.Ctx, in Update{{.Pascal}}In) ({{.Pascal}}, error) {
 		store.mu.Lock()
 		defer store.mu.Unlock()
@@ -93,7 +93,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 		return item, nil
 	}, aemeath.Summary("Update a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"))
 
-	// DELETE /{{.Route}}/{id}
+	// DELETE {{.Prefix}}/{{.Route}}/{id}
 	aemeath.GroupDELETE(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) (struct{}, error) {
 		store.mu.Lock()
 		defer store.mu.Unlock()

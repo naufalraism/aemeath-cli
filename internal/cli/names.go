@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"fmt"
@@ -36,7 +36,7 @@ func parseName(raw string) (Names, error) {
 			return Names{}, fmt.Errorf("invalid name %q: use only letters, digits, '-' and '_'", raw)
 		}
 	}
-	if first := rune(raw[0]); !(first < unicode.MaxASCII && unicode.IsLetter(first)) {
+	if first := rune(raw[0]); first >= unicode.MaxASCII || !unicode.IsLetter(first) {
 		return Names{}, fmt.Errorf("invalid name %q: it must start with a letter", raw)
 	}
 	words := splitWords(raw)

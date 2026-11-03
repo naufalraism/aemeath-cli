@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"context"
@@ -162,7 +162,7 @@ func runDev(ctx context.Context, opts devOptions) error {
 	defer r.stop(5 * time.Second)
 
 	warnedLogFatal := false // say it once, not after every change
-	say := func(format string, a ...any) { fmt.Fprintf(opts.stdout, format+"\n", a...) }
+	say := func(format string, a ...any) { outf(opts.stdout, format+"\n", a...) }
 
 	rebuild := func() {
 		say("🔨 Building ...")

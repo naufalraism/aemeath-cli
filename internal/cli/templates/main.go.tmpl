@@ -6,12 +6,12 @@ import (
 
 	"github.com/naufalraism/aemeath"
 )
-
+{{if not .Web}}
 // HelloOut is the response of GET /.
 type HelloOut struct {
 	Message string `json:"message"`
 }
-
+{{end}}
 func main() {
 	app := aemeath.New()
 
@@ -27,10 +27,20 @@ func main() {
 	// GET /healthz (liveness) and GET /readyz (readiness) for load balancers.
 	app.EnableHealth()
 
+	// "aemeath generate" registers what it creates right after these two
+	// comments (plugins first, because handlers may need them). Move them
+	// wherever you like, but keep the order: plugins, then handlers.
+	// aemeath:plugins
+	// aemeath:handlers
+{{if .Web}}
+	// The React app in web/. Run "npm run build" there to fill web/dist; while
+	// developing, use "npm run dev" in web/ instead (it proxies /api to this server).
+	app.Static("/", "web/dist")
+{{else}}
 	aemeath.GET(app, "/", func(c *aemeath.Ctx, _ struct{}) (HelloOut, error) {
 		return HelloOut{Message: "Hello from Aemeath!"}, nil
 	}, aemeath.Summary("Say hello"))
-
+{{end}}
 	// Interactive API docs at /docs. /client.ts, /schemas.ts (Zod) and /hooks.ts
 	// (React Query) are generated from the same Go types.
 	app.EnableDocs(aemeath.Info{Title: "{{.Title}}", Version: "0.1.0"})

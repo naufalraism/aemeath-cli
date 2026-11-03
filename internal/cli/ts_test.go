@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"context"
@@ -123,7 +123,7 @@ func TestDevRegeneratesTypeScriptAfterEachBuild(t *testing.T) {
 	waitFor(t, "the first TypeScript", func() bool { return strings.Contains(read(), "client.ts v1") })
 	waitFor(t, "the first server", func() bool { return fetch(port) == "v1" })
 
-	_ = os.WriteFile(mainGo, fmt.Appendf(nil, tsProgram, "v2"), 0644)
+	_ = os.WriteFile(mainGo, fmt.Appendf(nil, tsProgram, "v2"), 0o644)
 	waitFor(t, "the regenerated TypeScript", func() bool { return strings.Contains(read(), "client.ts v2") })
 	waitFor(t, "the new server", func() bool { return fetch(port) == "v2" })
 

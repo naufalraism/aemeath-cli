@@ -1,9 +1,10 @@
-package main
+package cli
 
 import (
 	"bytes"
 	"go/parser"
 	"go/token"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -50,44 +51,54 @@ func TestModulePath(t *testing.T) {
 
 // Every Go template must produce code that parses, for awkward names too.
 func TestGoTemplatesProduceValidCode(t *testing.T) {
-	templates := []string{"handler.go.tmpl", "test.go.tmpl", "model.go.tmpl", "middleware.go.tmpl", "job.go.tmpl", "main.go.tmpl"}
+	templates := []string{"handler.go.tmpl", "handler_db.go.tmpl", "test.go.tmpl", "test_db.go.tmpl", "model.go.tmpl", "middleware.go.tmpl", "job.go.tmpl", "main.go.tmpl"}
 	for _, raw := range []string{"Product", "product-item", "APIKey", "category", "type", "map"} {
 		names, err := parseName(raw)
 		if err != nil {
 			t.Fatal(err)
 		}
-		data := struct {
-			Names
-			Module, Title string
-		}{names, "example.com/app", "app"}
-		for _, tmpl := range templates {
-			out, err := render(tmpl, data)
-			if err != nil {
-				t.Errorf("%s with name %q: %v", tmpl, raw, err)
-				continue
-			}
-			if _, err := parser.ParseFile(token.NewFileSet(), tmpl, out, parser.AllErrors); err != nil {
-				t.Errorf("%s with name %q does not parse: %v\n%s", tmpl, raw, err, out)
-			}
-			if bytes.Contains(out, []byte("\r")) {
-				t.Errorf("%s output contains CR characters", tmpl)
+		for _, prefix := range []string{"", "/api/v1"} {
+			for _, web := range []bool{false, true} {
+				data := struct {
+					Names
+					Module, Title, Prefix string
+					Web, DB               bool
+				}{names, "example.com/app", "app", prefix, web, true}
+				for _, tmpl := range templates {
+					out, err := render(tmpl, data)
+					if err != nil {
+						t.Errorf("%s with name %q: %v", tmpl, raw, err)
+						continue
+					}
+					if _, err := parser.ParseFile(token.NewFileSet(), tmpl, out, parser.AllErrors); err != nil {
+						t.Errorf("%s with name %q does not parse: %v\n%s", tmpl, raw, err, out)
+					}
+					if bytes.Contains(out, []byte("\r")) {
+						t.Errorf("%s output contains CR characters", tmpl)
+					}
+				}
 			}
 		}
 	}
 }
 
 func TestTemplatesAreInEnglish(t *testing.T) {
-	entries, err := templateFS.ReadDir("templates")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, e := range entries {
-		b, _ := templateFS.ReadFile("templates/" + e.Name())
+	checked := 0
+	err := fs.WalkDir(templateFS, "templates", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		b, _ := templateFS.ReadFile(path)
+		checked++
 		for _, w := range []string{"Halo", "Jangan", "Menjalankan", "Tambahkan", "adalah", "berjalan", "untuk "} {
 			if strings.Contains(string(b), w) {
-				t.Errorf("%s still contains the Indonesian word %q", e.Name(), w)
+				t.Errorf("%s still contains the Indonesian word %q", path, w)
 			}
 		}
+		return nil
+	})
+	if err != nil || checked < 20 {
+		t.Fatalf("checked %d files, err = %v", checked, err)
 	}
 }
 
@@ -117,5 +128,34 @@ func TestMainTemplateChecksTheListenError(t *testing.T) {
 	}
 	if strings.Contains(string(out), "log.Fatal(app.Listen") || !strings.Contains(string(out), "err := app.Listen(") {
 		t.Fatalf("main.go must check the error returned by Listen:\n%s", out)
+	}
+}
+
+func TestDockerfileForAPIAndFullstack(t *testing.T) {
+	plain, err := render("Dockerfile.tmpl", projectData{GoVersion: "1.27"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	full, err := render("Dockerfile.tmpl", projectData{GoVersion: "1.27", Web: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"FROM golang:1.27-alpine AS builder", "USER app", "chown app:app /app", "ENTRYPOINT"} {
+		if !strings.Contains(string(plain), want) || !strings.Contains(string(full), want) {
+			t.Errorf("both Dockerfiles must contain %q", want)
+		}
+	}
+	if strings.Contains(string(plain), "node:") || strings.Contains(string(plain), "web/dist") {
+		t.Errorf("an API-only project must not build a frontend:\n%s", plain)
+	}
+	if !strings.Contains(string(full), "FROM node:22-alpine AS web") || !strings.Contains(string(full), "COPY --from=web /web/dist ./web/dist") {
+		t.Errorf("a fullstack project must build the frontend and copy it:\n%s", full)
+	}
+	// The stage numbers in the comments must follow the number of stages.
+	if !strings.Contains(string(plain), "# Stage 2: run") || !strings.Contains(string(full), "# Stage 3: run") {
+		t.Errorf("stage comments are off:\n%s\n%s", plain, full)
+	}
+	if n := strings.Count(string(full), "\nFROM "); n != 3 {
+		t.Errorf("a fullstack Dockerfile has %d stages, want 3", n)
 	}
 }

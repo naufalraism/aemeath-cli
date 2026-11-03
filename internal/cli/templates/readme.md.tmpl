@@ -1,0 +1,37 @@
+# {{.Title}}
+
+Built with [Aemeath](https://github.com/naufalraism/aemeath).
+
+## Run it
+
+```bash
+aemeath dev{{if .Web}} --ts-out web/src/api{{end}}        # the API with hot reload (http://localhost:3000)
+go test ./...      # run the tests
+```
+{{if .Web}}
+The React app lives in `web/`. In a second terminal:
+
+```bash
+cd web
+npm install
+npm run dev        # http://localhost:5173, proxies /api to the Go server
+```
+
+`aemeath dev --ts-out web/src/api` rewrites the typed client, the Zod schemas and the React Query hooks in `web/src/api/` every time the Go code changes, so the frontend always matches the API.
+
+For production, `npm run build` in `web/` fills `web/dist`, which the Go server serves at `/`.
+{{else}}
+- API docs: http://localhost:3000/docs
+- Typed TypeScript client: http://localhost:3000/client.ts
+{{end}}
+## Add more
+
+```bash
+aemeath generate api Product{{if .DB}} --db{{end}}   # CRUD handlers + tests, registered in main.go for you
+aemeath generate job SendEmail                      # a background job with a retrying runner
+aemeath generate docker                             # Dockerfile + docker-compose.yml
+aemeath ts --out web/src/api                        # TypeScript client, Zod schemas, React Query hooks
+```
+{{if .DB}}
+The database is SQLite (`app.db`, ignored by git). Each generated resource creates its own table when the server starts.
+{{end}}

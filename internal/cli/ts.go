@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"bytes"
@@ -87,7 +87,7 @@ func buildAndGenerate(ctx context.Context, dir, pkg, outDir string, stdout, stde
 	}
 	note, err := generateTypeScript(ctx, r.bin, dir, outDir)
 	if note != "" {
-		fmt.Fprintln(stderr, "⚠️  "+note)
+		outln(stderr, "⚠️  "+note)
 	}
 	return err
 }

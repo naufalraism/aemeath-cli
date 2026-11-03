@@ -1,0 +1,104 @@
+package handlers
+
+import (
+	"errors"
+
+	"gorm.io/gorm"
+
+	"github.com/naufalraism/aemeath"
+	"github.com/naufalraism/aemeath/db"
+
+	"{{.Module}}/models"
+)
+
+// Create{{.Pascal}}In is the request body of POST {{.Prefix}}/{{.Route}}.
+type Create{{.Pascal}}In struct {
+	Name string `json:"name" validate:"required,min=1,max=100"`
+}
+
+// {{.Pascal}}ByIDIn selects one {{.Pascal}} through the {id} path parameter.
+type {{.Pascal}}ByIDIn struct {
+	ID uint `path:"id"`
+}
+
+// Update{{.Pascal}}In is the request of PUT {{.Prefix}}/{{.Route}}/{id}.
+type Update{{.Pascal}}In struct {
+	ID   uint   `path:"id"`
+	Name string `json:"name" validate:"required,min=1,max=100"`
+}
+
+// {{.Pascal}}Handler registers the CRUD routes for {{.Pascal}} under {{.Prefix}}/{{.Route}}.
+//
+// It needs the database plugin to be registered first (db.Open + app.RegisterPlugin)
+// and creates its own table when it is registered.
+func {{.Pascal}}Handler(app *aemeath.App) {
+	database, ok := aemeath.Lookup[*gorm.DB](app)
+	if !ok {
+		panic("handlers.{{.Pascal}}Handler: register the database plugin before the handlers (db.Open and app.RegisterPlugin)")
+	}
+	if err := database.AutoMigrate(&models.{{.Pascal}}{}); err != nil {
+		panic("handlers.{{.Pascal}}Handler: migrating the {{.Pascal}} table: " + err.Error())
+	}
+	group := app.Group("{{.Prefix}}/{{.Route}}")
+
+	// GET {{.Prefix}}/{{.Route}}
+	aemeath.GroupGET(group, "/", func(c *aemeath.Ctx, _ struct{}) ([]models.{{.Pascal}}, error) {
+		items := []models.{{.Pascal}}{}
+		if err := db.From(c).Order("id").Find(&items).Error; err != nil {
+			return nil, err
+		}
+		return items, nil
+	}, aemeath.Summary("List {{.Pascal}} items"), aemeath.Tags("{{.Pascal}}"))
+
+	// POST {{.Prefix}}/{{.Route}}
+	aemeath.GroupPOST(group, "/", func(c *aemeath.Ctx, in Create{{.Pascal}}In) (models.{{.Pascal}}, error) {
+		item := models.{{.Pascal}}{Name: in.Name}
+		if err := db.From(c).Create(&item).Error; err != nil {
+			return models.{{.Pascal}}{}, err
+		}
+		return item, nil
+	}, aemeath.Summary("Create a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"), aemeath.Status(201))
+
+	// GET {{.Prefix}}/{{.Route}}/{id}
+	aemeath.GroupGET(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) (models.{{.Pascal}}, error) {
+		var item models.{{.Pascal}}
+		if err := db.From(c).First(&item, in.ID).Error; err != nil {
+			return item, notFoundOr{{.Pascal}}(err)
+		}
+		return item, nil
+	}, aemeath.Summary("Get a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"))
+
+	// PUT {{.Prefix}}/{{.Route}}/{id}
+	aemeath.GroupPUT(group, "/{id}", func(c *aemeath.Ctx, in Update{{.Pascal}}In) (models.{{.Pascal}}, error) {
+		var item models.{{.Pascal}}
+		if err := db.From(c).First(&item, in.ID).Error; err != nil {
+			return item, notFoundOr{{.Pascal}}(err)
+		}
+		item.Name = in.Name
+		if err := db.From(c).Save(&item).Error; err != nil {
+			return item, err
+		}
+		return item, nil
+	}, aemeath.Summary("Update a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"))
+
+	// DELETE {{.Prefix}}/{{.Route}}/{id}
+	aemeath.GroupDELETE(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) (struct{}, error) {
+		result := db.From(c).Delete(&models.{{.Pascal}}{}, in.ID)
+		if result.Error != nil {
+			return struct{}{}, result.Error
+		}
+		if result.RowsAffected == 0 {
+			return struct{}{}, aemeath.NotFound("{{.Pascal}} not found")
+		}
+		return struct{}{}, nil
+	}, aemeath.Summary("Delete a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"), aemeath.Status(204))
+}
+
+// notFoundOr{{.Pascal}} turns "no such row" into a 404 and leaves any other error alone
+// (it becomes a generic 500 that is only logged, never shown to the client).
+func notFoundOr{{.Pascal}}(err error) error {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return aemeath.NotFound("{{.Pascal}} not found")
+	}
+	return err
+}
