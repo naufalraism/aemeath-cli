@@ -25,6 +25,7 @@ Creates a project, registers its first resource and runs `go mod tidy`.
 ```bash
 aemeath new my-app                       # a minimal API (default)
 aemeath new my-app --template db         # + SQLite and a Task CRUD resource
+aemeath new my-app -t db --database postgres   # PostgreSQL (or mysql); docker compose starts the server
 aemeath new my-app --template fullstack  # + a React + TypeScript app in web/
 aemeath new my-app --module github.com/me/my-app   # custom module path
 aemeath new my-app --no-tidy             # skip 'go mod tidy'
@@ -34,7 +35,7 @@ aemeath new my-app --replace ../aemeath  # use a local framework checkout
 | Template | What you get |
 | :--- | :--- |
 | `api` | `main.go` with health checks, docs and a hello route; no dependencies besides Aemeath |
-| `db` | `api` + the SQLite plugin, a `Task` model, CRUD handlers under `/tasks` and tests that run against a real database |
+| `db` | `api` + the database plugin (SQLite by default; `--database postgres\|mysql` reads `DATABASE_URL` and adds a database to `docker-compose.yml`), a `Task` model, CRUD handlers under `/tasks` and tests that run against a real database |
 | `fullstack` | `db` with the routes under `/api`, plus `web/`: Vite + React + TypeScript + TanStack Query. The typed client, Zod schemas and hooks are generated into `web/src/api`, so it works right away |
 
 For `fullstack`, run two terminals:
