@@ -1,6 +1,12 @@
 # Changelog
 
-## [0.2.0] - 2026-11-03
+## [0.3.0] - 2026-11-12
+
+### Added (databases)
+
+- **`aemeath new --database sqlite|postgres|mysql`** for the `db` and `fullstack` templates. PostgreSQL and MySQL register `postgres.Open(os.Getenv("DATABASE_URL"))` / `mysql.Open(...)`, add a `DATABASE_URL` example to `.env.example`, a health-checked database service and volume to `docker-compose.yml`, and a matching README section. The generated handler tests still use a temporary SQLite file, so they need no server.
+- `generate api --db` keeps using the database `main.go` already registers (it never adds a second plugin) and accepts `--database` for a project that has none yet; `generate docker` detects it too.
+- **Requires a framework release that contains `aemeath/db/postgres` and `aemeath/db/mysql`** (publish the framework first).
 
 ### Added (templates, wiring, jobs, releases)
 
