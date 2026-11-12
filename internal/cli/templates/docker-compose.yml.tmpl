@@ -5,6 +5,54 @@ services:
       - "3000:3000"
     environment:
       PORT: "3000"
+{{- if eq .Database "postgres"}}
+      DATABASE_URL: postgres://app:app@db:5432/app?sslmode=disable
+{{- else if eq .Database "mysql"}}
+      DATABASE_URL: app:app@tcp(db:3306)/app
+{{- end}}
       # Put secrets in a .env file and uncomment:
       # env_file: .env
     restart: unless-stopped
+{{- if or (eq .Database "postgres") (eq .Database "mysql")}}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Development database. Change the passwords before using anything like this elsewhere.
+  db:
+{{- if eq .Database "postgres"}}
+    image: postgres:16
+    ports:
+      - "127.0.0.1:5432:5432" # only reachable from this machine, for "go run" / "aemeath dev"
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+{{- else}}
+    image: mysql:8
+    ports:
+      - "127.0.0.1:3306:3306" # only reachable from this machine, for "go run" / "aemeath dev"
+    environment:
+      MYSQL_DATABASE: app
+      MYSQL_USER: app
+      MYSQL_PASSWORD: app
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uapp", "-papp"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+{{- end}}
+
+volumes:
+  dbdata:
+{{- end}}

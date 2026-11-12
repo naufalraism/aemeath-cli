@@ -47,9 +47,11 @@ type resourceOpts struct {
 	Name   string
 	Prefix string
 	DB     bool // handlers backed by GORM instead of an in-memory store
-	Force  bool
-	NoWire bool // do not edit main.go
-	NoTest bool
+	// Database is "sqlite", "postgres" or "mysql"; empty means "keep what main.go already uses" (SQLite for a new project).
+	Database string
+	Force    bool
+	NoWire   bool // do not edit main.go
+	NoTest   bool
 }
 
 type plannedFile struct {
@@ -127,9 +129,13 @@ func generateResource(out io.Writer, o resourceOpts) error {
 		return nil
 	}
 	if o.DB {
-		wireAndReport(out, o.Root, dbPluginWire(), "the database plugin", []string{
-			`if database, err := db.Open("app.db"); err != nil { log.Fatal(err) } else if err := app.RegisterPlugin(database); err != nil { log.Fatal(err) }`,
-		}, "import \"github.com/naufalraism/aemeath/db\"")
+		kind := o.Database
+		if kind == "" {
+			kind = detectDatabase(o.Root)
+		}
+		wireAndReport(out, o.Root, dbPluginWire(kind), "the database plugin", []string{
+			dbManualLine(kind),
+		}, "import \""+dbImportPath(kind)+"\"")
 	}
 	wireAndReport(out, o.Root, handlerWire(module, names), "handlers."+names.Pascal+"Handler(app)", []string{
 		"handlers." + names.Pascal + "Handler(app)",
@@ -216,8 +222,9 @@ func newGenerateCmd() *cobra.Command {
 file for them, and registers the handlers in main.go.
 
 By default the handlers keep their data in memory, so they work immediately. With
---db they use GORM and SQLite instead: a model is created in models/, the database
-plugin is registered in main.go, and the table is created when the server starts.
+--db they use GORM instead: a model is created in models/, the database plugin is
+registered in main.go (SQLite, or PostgreSQL/MySQL with --database postgres|mysql, which
+read the connection string from DATABASE_URL), and the table is created when the server starts.
 
 main.go is only edited at the "// aemeath:plugins" and "// aemeath:handlers" comments,
 or before app.Listen, and only when it parses. If it cannot be edited safely it is
@@ -226,10 +233,17 @@ left alone and the lines to add are printed. Use --no-wire to skip the edit.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			apiOpts.Root, apiOpts.Name, apiOpts.Force = ".", args[0], force
+			if apiOpts.Database != "" && !validDatabase(apiOpts.Database) {
+				return fmt.Errorf("unknown database %q: choose one of %s", apiOpts.Database, databaseNames)
+			}
+			if apiOpts.Database != "" && !apiOpts.DB {
+				return fmt.Errorf("--database only applies together with --db")
+			}
 			return generateResource(cmd.OutOrStdout(), apiOpts)
 		},
 	}
-	api.Flags().BoolVar(&apiOpts.DB, "db", false, "back the handlers with GORM and SQLite instead of an in-memory store")
+	api.Flags().BoolVar(&apiOpts.DB, "db", false, "back the handlers with GORM instead of an in-memory store")
+	api.Flags().StringVar(&apiOpts.Database, "database", "", "database to register with --db: "+databaseNames+" (default: what main.go already uses, else sqlite)")
 	api.Flags().StringVar(&apiOpts.Prefix, "prefix", "", "URL prefix of the routes, for example /api")
 	api.Flags().BoolVar(&apiOpts.NoWire, "no-wire", false, "do not edit main.go")
 	api.Flags().BoolVar(&apiOpts.NoTest, "no-test", false, "do not generate the test file")
@@ -285,7 +299,7 @@ left alone and the lines to add are printed. Use --no-wire to skip the edit.`,
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
-			data := projectData{GoVersion: goVersion(), Web: fileExists(filepath.Join("web", "package.json"))}
+			data := projectData{GoVersion: goVersion(), Web: fileExists(filepath.Join("web", "package.json")), Database: detectDatabase(".")}
 			for _, f := range []struct{ tmpl, dest string }{
 				{"Dockerfile.tmpl", "Dockerfile"},
 				{"docker-compose.yml.tmpl", "docker-compose.yml"},
@@ -355,4 +369,25 @@ func moduleOr(module string) string {
 		return "<your-module>"
 	}
 	return module
+}
+
+func dbImportPath(kind string) string {
+	switch kind {
+	case dbPostgres:
+		return aemeathModule + "/db/postgres"
+	case dbMySQL:
+		return aemeathModule + "/db/mysql"
+	}
+	return aemeathModule + "/db"
+}
+
+func dbManualLine(kind string) string {
+	open := `db.Open("app.db")`
+	switch kind {
+	case dbPostgres:
+		open = `postgres.Open(os.Getenv("DATABASE_URL"))`
+	case dbMySQL:
+		open = `mysql.Open(os.Getenv("DATABASE_URL"))`
+	}
+	return `if database, err := ` + open + `; err != nil { log.Fatal(err) } else if err := app.RegisterPlugin(database); err != nil { log.Fatal(err) }`
 }

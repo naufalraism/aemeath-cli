@@ -24,6 +24,7 @@ type projectData struct {
 	Replace   string
 	Web       bool
 	DB        bool
+	Database  string // "sqlite", "postgres" or "mysql" (only meaningful when DB is set)
 }
 
 var modulePathRe = regexp.MustCompile(`^[A-Za-z0-9._~/-]+$`)
@@ -77,7 +78,7 @@ func npmName(title string) string {
 }
 
 func newNewCmd() *cobra.Command {
-	var module, replace, template string
+	var module, replace, template, database string
 	var noTidy bool
 
 	cmd := &cobra.Command{
@@ -85,29 +86,42 @@ func newNewCmd() *cobra.Command {
 		Short: "Create a new Aemeath project",
 		Long: `Creates a project, registers its first resource and runs 'go mod tidy'.
 
+Databases (--database, for the db and fullstack templates): sqlite (default), postgres, mysql.
+PostgreSQL and MySQL read DATABASE_URL, and docker-compose.yml starts a matching server.
+
 Templates (--template):
   api        a minimal API (default)
-  db         an API with SQLite and a Task CRUD resource
+  db         an API with a database (SQLite by default) and a Task CRUD resource
   fullstack  the db template plus a React + TypeScript app in web/ that uses the
              generated client, Zod schemas and React Query hooks`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
-			return runNew(cmd, args[0], module, replace, template, noTidy)
+			return runNew(cmd, args[0], module, replace, template, database, noTidy)
 		},
 	}
 	cmd.Flags().StringVar(&module, "module", "", "Go module path (default: the project name)")
 	cmd.Flags().StringVar(&replace, "replace", "", "path of a local Aemeath checkout to use instead of the published module (for framework development)")
 	cmd.Flags().StringVarP(&template, "template", "t", "api", "project template: "+templateNames())
+	cmd.Flags().StringVar(&database, "database", "", "database for the db and fullstack templates: "+databaseNames+" (default sqlite)")
 	cmd.Flags().BoolVar(&noTidy, "no-tidy", false, "do not run 'go mod tidy' after creating the project")
 	return cmd
 }
 
-func runNew(cmd *cobra.Command, target, module, replace, template string, noTidy bool) error {
+func runNew(cmd *cobra.Command, target, module, replace, template, database string, noTidy bool) error {
 	out := cmd.OutOrStdout()
 	tpl, ok := projectTemplates[template]
 	if !ok {
 		return fmt.Errorf("unknown template %q: choose one of %s", template, templateNames())
+	}
+	if database != "" && !validDatabase(database) {
+		return fmt.Errorf("unknown database %q: choose one of %s", database, databaseNames)
+	}
+	if database != "" && !tpl.DB {
+		return fmt.Errorf("--database only applies to the db and fullstack templates (the %q template has no database)", template)
+	}
+	if database == "" {
+		database = dbSQLite
 	}
 	base := filepath.Base(filepath.Clean(target))
 	if !projectNameRe.MatchString(base) {
@@ -123,7 +137,7 @@ func runNew(cmd *cobra.Command, target, module, replace, template string, noTidy
 		return fmt.Errorf("%s already exists", target)
 	}
 
-	data := projectData{Module: module, Title: base, NPMName: npmName(base), GoVersion: goVersion(), Web: tpl.Web, DB: tpl.DB}
+	data := projectData{Module: module, Title: base, NPMName: npmName(base), GoVersion: goVersion(), Web: tpl.Web, DB: tpl.DB, Database: database}
 	if replace != "" {
 		abs, err := filepath.Abs(replace)
 		if err != nil {
@@ -158,7 +172,7 @@ func runNew(cmd *cobra.Command, target, module, replace, template string, noTidy
 	outf(out, "✨ Project %q created in %s (template: %s)\n", base, target, template)
 
 	if tpl.Resource != "" {
-		if err := generateResource(out, resourceOpts{Root: target, Name: tpl.Resource, DB: tpl.DB, Prefix: tpl.Prefix}); err != nil {
+		if err := generateResource(out, resourceOpts{Root: target, Name: tpl.Resource, DB: tpl.DB, Database: database, Prefix: tpl.Prefix}); err != nil {
 			return err
 		}
 	}

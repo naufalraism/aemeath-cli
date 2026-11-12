@@ -123,7 +123,7 @@ func TestWireBeforeListenWhenThereAreNoMarkers(t *testing.T) {
 func TestWireDatabasePluginThenHandlersKeepsTheOrder(t *testing.T) {
 	dir := writeMain(t, templateMain)
 	n, _ := parseName("Task")
-	for _, spec := range []wireSpec{dbPluginWire(), handlerWire("m", n), jobsRunnerWire()} {
+	for _, spec := range []wireSpec{dbPluginWire(dbSQLite), handlerWire("m", n), jobsRunnerWire()} {
 		if res, err := wireMain(dir, spec); err != nil || res.Outcome != wired {
 			t.Fatalf("res = %+v, err = %v", res, err)
 		}

@@ -33,5 +33,11 @@ aemeath generate docker                             # Dockerfile + docker-compos
 aemeath ts --out web/src/api                        # TypeScript client, Zod schemas, React Query hooks
 ```
 {{if .DB}}
+{{- if eq .Database "postgres"}}
+The database is PostgreSQL. The server reads its connection string from `DATABASE_URL` (see `.env.example`). Start a development server with `docker compose up db` (it creates the `app` database), then run `DATABASE_URL=... aemeath dev`. Each generated resource creates its own table when the server starts. The generated handler tests use a temporary SQLite file, so they need no server.
+{{- else if eq .Database "mysql"}}
+The database is MySQL (MariaDB works too). The server reads its connection string from `DATABASE_URL` (see `.env.example`). Start a development server with `docker compose up db`, then run `DATABASE_URL=... aemeath dev`. Each generated resource creates its own table when the server starts. The generated handler tests use a temporary SQLite file, so they need no server.
+{{- else}}
 The database is SQLite (`app.db`, ignored by git). Each generated resource creates its own table when the server starts.
+{{- end}}
 {{end}}
