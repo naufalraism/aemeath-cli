@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -271,4 +272,37 @@ func render2(t *testing.T, _ string, tmpl, kind string) string {
 		t.Fatal(err)
 	}
 	return string(b)
+}
+
+// The root .gitignore used to contain "client.ts", which matches at any depth,
+// so web/src/api/client.ts was never committed while schemas.ts and hooks.ts
+// were: a fresh clone (CI, Docker builds from git) could not build the web app.
+func TestGeneratedWebFilesAreNotGitIgnored(t *testing.T) {
+	gitPath, err := exec.LookPath("git")
+	if err != nil {
+		t.Skip("git is not installed")
+	}
+	target := filepath.Join(t.TempDir(), "demo")
+	if out, err := runNewForTest(t, target, "fullstack"); err != nil {
+		t.Fatalf("new: %v\n%s", err, out)
+	}
+	api := filepath.Join(target, "web", "src", "api")
+	_ = os.MkdirAll(api, 0o755)
+	for _, f := range tsFiles {
+		_ = os.WriteFile(filepath.Join(api, f), []byte("export {};\n"), 0o644)
+	}
+	if out, err := exec.Command(gitPath, "-C", target, "init", "-q").CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v\n%s", err, out)
+	}
+	for _, f := range tsFiles {
+		rel := "web/src/api/" + f
+		// check-ignore exits 0 when the path IS ignored.
+		if err := exec.Command(gitPath, "-C", target, "check-ignore", "-q", rel).Run(); err == nil {
+			t.Errorf("%s is ignored by git, but the web app imports it", rel)
+		}
+	}
+	// A client.ts at the project root is still ignored.
+	if err := exec.Command(gitPath, "-C", target, "check-ignore", "-q", "client.ts").Run(); err != nil {
+		t.Error("a root client.ts should stay ignored")
+	}
 }
