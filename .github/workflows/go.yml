@@ -28,6 +28,27 @@ jobs:
     - name: Test
       run: go test -race -cover ./...
 
+  generated-projects:
+    name: Generated projects build against the framework
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    # The framework's main branch: a template that no longer compiles against it fails here.
+    - uses: actions/checkout@v4
+      with:
+        repository: naufalraism/aemeath
+        path: .framework
+
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+
+    - name: Create, build, vet and test a project from every template
+      env:
+        AEMEATH_FRAMEWORK_DIR: ${{ github.workspace }}/.framework
+      run: go test ./internal/cli -run TestGeneratedProjectsBuild -v
+
   release-config:
     name: GoReleaser configuration
     runs-on: ubuntu-latest
