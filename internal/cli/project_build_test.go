@@ -124,6 +124,20 @@ func TestGeneratedProjectsBuild(t *testing.T) {
 					t.Fatalf("%s: %v", g.what, err)
 				}
 			}
+			// The time limit of a generated job only works if its method matches the
+			// framework's interface. Older frameworks have no such interface; there the method is unused.
+			if fileExists(filepath.Join(framework, "jobs", "jobs.go")) {
+				src, err := os.ReadFile(filepath.Join(framework, "jobs", "jobs.go"))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if bytes.Contains(src, []byte("type Timeouter interface")) {
+					assert := "package jobs\n\nimport aejobs \"github.com/naufalraism/aemeath/jobs\"\n\nvar _ aejobs.Timeouter = (*SendReportJob)(nil)\n"
+					if err := os.WriteFile(filepath.Join(root, "jobs", "timeouter_assert.go"), []byte(assert), 0o600); err != nil {
+						t.Fatal(err)
+					}
+				}
+			}
 			check("after the generators")
 
 			// What 'aemeath ts' and 'aemeath dev --ts-out' do: build the app and let it write its client.
