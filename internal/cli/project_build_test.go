@@ -27,6 +27,9 @@ import (
 // project's go.mod (replace directives for a machine without network access;
 // 'go mod tidy' is then allowed to leave gaps, which the build still reports).
 func TestGeneratedProjectsBuild(t *testing.T) {
+	if testing.Short() {
+		t.Skip("-short: this test builds Go programs")
+	}
 	framework := os.Getenv("AEMEATH_FRAMEWORK_DIR")
 	if framework == "" {
 		t.Skip("set AEMEATH_FRAMEWORK_DIR to a checkout of github.com/naufalraism/aemeath to run this test")
