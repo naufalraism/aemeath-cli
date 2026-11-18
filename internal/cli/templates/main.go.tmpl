@@ -15,6 +15,11 @@ type HelloOut struct {
 func main() {
 	app := aemeath.New()
 
+	// Behind a reverse proxy or load balancer (Docker, Nginx, most hosting
+	// platforms), every request seems to come from the proxy. Put this first so
+	// that logs and rate limits see the visitor's address instead:
+	//
+	//	app.Use(aemeath.RealIP(aemeath.PrivateNetworks...))
 	app.Use(
 		aemeath.SecurityHeaders(),
 		aemeath.RequestID(),
@@ -26,6 +31,12 @@ func main() {
 
 	// GET /healthz (liveness) and GET /readyz (readiness) for load balancers.
 	app.EnableHealth()
+
+	// On Kubernetes or behind a load balancer, keep serving for a few seconds
+	// after the stop signal while /readyz already answers 503, so that no
+	// request is refused during a deploy:
+	//
+	//	app.SetShutdownDelay(5 * time.Second)
 
 	// "aemeath generate" registers what it creates right after these two
 	// comments (plugins first, because handlers may need them). Move them

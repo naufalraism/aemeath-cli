@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- `internal/cli` now tests the claims the README makes about the commands (every documented flag, the name forms, that nothing is written when a destination exists, that `main.go` is never edited twice or left half-edited, and what `dev` watches).
+- Corrected in the README: `dev` cannot send `SIGTERM` on Windows, where it kills the server process at once.
+
+- Generated jobs have a time limit of 5 minutes per attempt (`Timeout()`), so a job that hangs no longer keeps its worker forever. It takes effect with the Aemeath release that has `jobs.Timeouter`; older releases ignore the method.
+- `main.go` of a new project shows where to add `aemeath.RealIP` (behind a proxy) and `app.SetShutdownDelay` (behind a load balancer).
+- `docker-compose.yml` has a health check on `/readyz` for the app.
+- New projects no longer ignore `web/src/api/client.ts`.
+- A test builds, vets and tests a project from every template against a checkout of the framework (`AEMEATH_FRAMEWORK_DIR`), and CI runs it.
+
 ## [0.3.0] - 2026-11-12
 
 ### Added (databases)

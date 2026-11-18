@@ -227,6 +227,9 @@ func TestGenerateJobCreatesTheJobAndRegistersTheRunnerOnce(t *testing.T) {
 		t.Errorf("the job must implement jobs.Job (Run(ctx)):\n%s", job)
 	}
 	main := read(t, dir, "main.go")
+	if !strings.Contains(job, "func (j *SendEmailJob) Timeout() time.Duration") {
+		t.Errorf("the job must have a time limit (jobs.Timeouter), or one that hangs keeps its worker forever:\n%s", job)
+	}
 	if strings.Count(main, "aejobs.New(") != 1 || !strings.Contains(main, `aejobs "github.com/naufalraism/aemeath/jobs"`) {
 		t.Errorf("the runner must be registered exactly once:\n%s", main)
 	}

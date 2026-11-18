@@ -13,6 +13,12 @@ services:
       # Put secrets in a .env file and uncomment:
       # env_file: .env
     restart: unless-stopped
+    # "docker compose ps" shows the app as healthy once it can serve requests.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/readyz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 {{- if or (eq .Database "postgres") (eq .Database "mysql")}}
     depends_on:
       db:

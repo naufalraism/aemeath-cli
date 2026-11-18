@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"log"
+	"time"
 )
 
 // {{.Pascal}}Job is a background job. Its fields are the data the job needs.
@@ -12,9 +13,10 @@ type {{.Pascal}}Job struct {
 	// Example: Email  string
 }
 
-// Run does the work. ctx is cancelled when the server is forced to stop, so
-// long jobs should return when it is done. Returning an error makes the runner
-// retry the job (3 attempts by default, with exponential backoff).
+// Run does the work. ctx is cancelled when the time limit below is over or the
+// server is forced to stop, so pass it to database and HTTP calls and return
+// when it is done. Returning an error makes the runner retry the job
+// (3 attempts by default, with exponential backoff).
 func (j *{{.Pascal}}Job) Run(ctx context.Context) error {
 	log.Println("running job: {{.Pascal}}")
 
@@ -26,6 +28,10 @@ func (j *{{.Pascal}}Job) Run(ctx context.Context) error {
 	}
 	return nil
 }
+
+// Timeout is the time limit of one attempt. Without a limit, a job that hangs
+// keeps its worker forever. (Aemeath v0.3 and older ignore this method.)
+func (j *{{.Pascal}}Job) Timeout() time.Duration { return 5 * time.Minute }
 
 // Enqueue it from a handler (the runner is registered in main.go):
 //

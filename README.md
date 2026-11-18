@@ -84,7 +84,7 @@ aemeath dev --pkg ./cmd/server --delay 500ms
 aemeath dev --ts-out web/src/api    # also rewrite the TypeScript files after every successful build
 ```
 
-- It runs the compiled binary directly and stops it with `SIGTERM` (then `SIGKILL` after 5 s), so the port is always free again.
+- It runs the compiled binary directly. On macOS and Linux it stops the server with `SIGTERM` and kills it if it is still there after 5 s, so the server can shut down gracefully; Windows has no `SIGTERM` for processes, so there the process is killed at once. Either way the port is free again.
 - If a build fails, the previous version keeps running until you fix the error.
 - Changes are debounced, new directories are watched, and `_test.go` files, hidden folders, `vendor`, `node_modules`, `tmp` and `uploads` are ignored.
 
