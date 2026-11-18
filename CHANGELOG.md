@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.4.1] - 2026-11-18
+
 - **`GET /` of the api and db templates answers `/` only** (`"/{$}"`). It was registered as `"/"`, which net/http reads as "every path": `/does-not-exist`, `/admin/.env` and `/tasks/` answered `200 Hello from Aemeath!` instead of `404`.
 - **The api and db templates have a `main_test.go`**, so `go test ./...` in a new api project tests something (it printed `[no test files]`): `GET /` answers the greeting and other paths `404`. The route moved into a `hello(app)` function that the test can register.
 - **Handler tests of PostgreSQL and MySQL projects can run against that database:** with `TEST_DATABASE_URL` set they open it with `postgres.Open` or `mysql.Open` instead of the temporary SQLite file, so the code path the app uses in production is tested too (before, `go test` only ever used SQLite). The tests use the id of the row they created instead of assuming `1`, so they pass on a database that already has rows, and never delete rows they did not create. CI runs the generated projects against PostgreSQL 16 and MySQL 8.4 services.
