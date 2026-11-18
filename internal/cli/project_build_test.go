@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -23,9 +24,18 @@ import (
 //
 //	AEMEATH_FRAMEWORK_DIR=/full/path/to/aemeath go test ./internal/cli -run TestGeneratedProjectsBuild -v
 //
+// AEMEATH_TEST_POSTGRES_URL and AEMEATH_TEST_MYSQL_URL, when set, are passed
+// as TEST_DATABASE_URL to the generated tests of PostgreSQL and MySQL
+// projects, so those run against the real database instead of SQLite.
+//
 // AEMEATH_TEST_GOMOD may name a file whose lines are appended to each
 // project's go.mod (replace directives for a machine without network access;
 // 'go mod tidy' is then allowed to leave gaps, which the build still reports).
+var (
+	testDatabaseEnv = map[string]string{dbPostgres: "AEMEATH_TEST_POSTGRES_URL", dbMySQL: "AEMEATH_TEST_MYSQL_URL"}
+	testDatabaseMu  = map[string]*sync.Mutex{dbPostgres: {}, dbMySQL: {}}
+)
+
 func TestGeneratedProjectsBuild(t *testing.T) {
 	if testing.Short() {
 		t.Skip("-short: this test builds Go programs")
@@ -84,6 +94,10 @@ func TestGeneratedProjectsBuild(t *testing.T) {
 					t.Fatal(err, cerr)
 				}
 			}
+			kind := tc.database
+			if kind == "" {
+				kind = tc.addDB
+			}
 			check := func(stage string) {
 				t.Helper()
 				tidy := []string{"mod", "tidy"}
@@ -93,7 +107,20 @@ func TestGeneratedProjectsBuild(t *testing.T) {
 				for _, args := range [][]string{tidy, {"build", "./..."}, {"vet", "./..."}, {"test", "./..."}} {
 					c := exec.Command("go", args...)
 					c.Dir = root
-					if b, err := c.CombinedOutput(); err != nil {
+					c.Env = os.Environ()
+					if args[0] == "test" {
+						// The generated tests use SQLite unless TEST_DATABASE_URL names a
+						// database of the project's kind; projects of the same kind share
+						// it, so their tests take turns.
+						if dsn := os.Getenv(testDatabaseEnv[kind]); dsn != "" {
+							c.Env = append(c.Env, "TEST_DATABASE_URL="+dsn)
+							testDatabaseMu[kind].Lock()
+							defer testDatabaseMu[kind].Unlock()
+							t.Logf("%s: go test with TEST_DATABASE_URL from %s", stage, testDatabaseEnv[kind])
+						}
+					}
+					b, err := c.CombinedOutput()
+					if err != nil {
 						t.Fatalf("%s: go %v: %v\n%s", stage, args, err, b)
 					}
 				}

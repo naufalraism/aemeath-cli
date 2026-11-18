@@ -30,16 +30,16 @@ func TestNewTemplates(t *testing.T) {
 	}
 	cases := map[string]want{
 		"api": {
-			files:     []string{"go.mod", "main.go", ".gitignore", ".env.example", "README.md"},
+			files:     []string{"go.mod", "main.go", "main_test.go", ".gitignore", ".env.example", "README.md"},
 			absent:    []string{"web", "handlers", "models"},
-			mainHas:   []string{`"/"`, "HelloOut", "// aemeath:plugins", "// aemeath:handlers"},
-			mainLacks: []string{"db.Open", "web/dist"},
+			mainHas:   []string{`"/{$}"`, "HelloOut", "// aemeath:plugins", "// aemeath:handlers"},
+			mainLacks: []string{"db.Open", "web/dist", `GET(app, "/",`},
 		},
 		"db": {
-			files:     []string{"main.go", "handlers/task.go", "handlers/task_test.go", "models/task.go"},
+			files:     []string{"main.go", "main_test.go", "handlers/task.go", "handlers/task_test.go", "models/task.go"},
 			absent:    []string{"web"},
-			mainHas:   []string{`db.Open("app.db")`, "handlers.TaskHandler(app)", "HelloOut"},
-			mainLacks: []string{"web/dist"},
+			mainHas:   []string{`db.Open("app.db")`, "handlers.TaskHandler(app)", "HelloOut", `"/{$}"`},
+			mainLacks: []string{"web/dist", `GET(app, "/",`},
 		},
 		"fullstack": {
 			files: []string{
@@ -49,6 +49,7 @@ func TestNewTemplates(t *testing.T) {
 			},
 			mainHas:   []string{`db.Open("app.db")`, "handlers.TaskHandler(app)", `app.Static("/", "web/dist")`},
 			mainLacks: []string{"HelloOut"},
+			absent:    []string{"main_test.go"},
 		},
 	}
 	for name, w := range cases {
@@ -84,6 +85,9 @@ func TestNewTemplates(t *testing.T) {
 				}
 			}
 			assertParses(t, target, "main.go")
+			if name != "fullstack" {
+				assertParses(t, target, "main_test.go")
+			}
 			if name != "api" {
 				assertParses(t, target, "handlers/task.go", "handlers/task_test.go", "models/task.go")
 			}

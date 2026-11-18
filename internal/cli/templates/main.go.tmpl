@@ -11,6 +11,15 @@ import (
 type HelloOut struct {
 	Message string `json:"message"`
 }
+
+// hello registers GET /. "/{$}" is "/" and nothing else: a plain "/" would
+// also answer every path no other route takes (/admin/.env, a typo in an API
+// URL) with 200. main_test.go checks both.
+func hello(app *aemeath.App) {
+	aemeath.GET(app, "/{$}", func(c *aemeath.Ctx, _ struct{}) (HelloOut, error) {
+		return HelloOut{Message: "Hello from Aemeath!"}, nil
+	}, aemeath.Summary("Say hello"))
+}
 {{end}}
 func main() {
 	app := aemeath.New()
@@ -48,9 +57,7 @@ func main() {
 	// developing, use "npm run dev" in web/ instead (it proxies /api to this server).
 	app.Static("/", "web/dist")
 {{else}}
-	aemeath.GET(app, "/", func(c *aemeath.Ctx, _ struct{}) (HelloOut, error) {
-		return HelloOut{Message: "Hello from Aemeath!"}, nil
-	}, aemeath.Summary("Say hello"))
+	hello(app)
 {{end}}
 	// Interactive API docs at /docs. /client.ts, /schemas.ts (Zod) and /hooks.ts
 	// (React Query) are generated from the same Go types.

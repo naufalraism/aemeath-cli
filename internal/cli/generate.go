@@ -14,9 +14,10 @@ import (
 // genData is what the generator templates receive.
 type genData struct {
 	Names
-	Module string
-	Prefix string
-	DB     bool
+	Module   string
+	Prefix   string
+	DB       bool
+	Database string // sqlite, postgres or mysql, when DB is set
 }
 
 var prefixRe = regexp.MustCompile(`^(/[A-Za-z0-9._~-]+)+$`)
@@ -83,6 +84,12 @@ func generateResource(out io.Writer, o resourceOpts) error {
 		return err
 	}
 	data := genData{Names: names, Module: module, Prefix: prefix, DB: o.DB}
+	if o.DB {
+		data.Database = o.Database
+		if data.Database == "" {
+			data.Database = detectDatabase(o.Root)
+		}
+	}
 
 	handlerTmpl, testTmpl := "handler.go.tmpl", "test.go.tmpl"
 	if o.DB {
@@ -129,10 +136,7 @@ func generateResource(out io.Writer, o resourceOpts) error {
 		return nil
 	}
 	if o.DB {
-		kind := o.Database
-		if kind == "" {
-			kind = detectDatabase(o.Root)
-		}
+		kind := data.Database
 		wireAndReport(out, o.Root, dbPluginWire(kind), "the database plugin", []string{
 			dbManualLine(kind),
 		}, "import \""+dbImportPath(kind)+"\"")
@@ -335,7 +339,7 @@ func generateTestOnly(out io.Writer, root, rawName, rawPrefix string, db, force 
 		tmpl = "test_db.go.tmpl"
 	}
 	dest := filepath.Join("handlers", names.File+"_test.go")
-	if err := renderTo(tmpl, filepath.Join(root, dest), genData{Names: names, Module: module, Prefix: prefix, DB: db}, force); err != nil {
+	if err := renderTo(tmpl, filepath.Join(root, dest), genData{Names: names, Module: module, Prefix: prefix, DB: db, Database: detectDatabase(root)}, force); err != nil {
 		return err
 	}
 	outf(out, "✨ %s created\n", dest)

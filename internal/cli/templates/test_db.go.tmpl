@@ -2,24 +2,51 @@ package handlers_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+{{- if ne .Database "sqlite"}}
+	"os"
+{{- end}}
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/naufalraism/aemeath"
 	"github.com/naufalraism/aemeath/db"
+{{- if eq .Database "postgres"}}
+	"github.com/naufalraism/aemeath/db/postgres"
+{{- else if eq .Database "mysql"}}
+	"github.com/naufalraism/aemeath/db/mysql"
+{{- end}}
 
 	"{{.Module}}/handlers"
 	"{{.Module}}/models"
 )
 
+{{if eq .Database "sqlite" -}}
 // new{{.Pascal}}App uses a real SQLite database in a temporary directory.
+{{- else -}}
+// new{{.Pascal}}App uses a real SQLite database in a temporary directory, or
+// the {{if eq .Database "postgres"}}PostgreSQL{{else}}MySQL{{end}} database in TEST_DATABASE_URL when it is set, so the
+// tests also run against the database the app uses in production. Point it
+// at a database for tests only: the tests add rows to it (they never delete
+// rows they did not create).
+{{- end}}
 func new{{.Pascal}}App(t *testing.T) http.Handler {
 	t.Helper()
+{{- if eq .Database "sqlite"}}
 	database, err := db.Open(filepath.Join(t.TempDir(), "test.db"))
+{{- else}}
+	var database *db.Plugin
+	var err error
+	if dsn := os.Getenv("TEST_DATABASE_URL"); dsn != "" {
+		database, err = {{.Database}}.Open(dsn)
+	} else {
+		database, err = db.Open(filepath.Join(t.TempDir(), "test.db"))
+	}
+{{- end}}
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,14 +88,16 @@ func Test{{.Pascal}}CRUD(t *testing.T) {
 		t.Fatalf("create: unexpected body %s (err: %v)", rec.Body, err)
 	}
 
+	one := fmt.Sprintf("{{.Prefix}}/{{.Route}}/%d", created.ID)
+
 	// Read
-	rec = send{{.Pascal}}(h, "GET", "{{.Prefix}}/{{.Route}}/1", "")
+	rec = send{{.Pascal}}(h, "GET", one, "")
 	if rec.Code != http.StatusOK {
 		t.Fatalf("get: status = %d, want 200", rec.Code)
 	}
 
 	// Update
-	rec = send{{.Pascal}}(h, "PUT", "{{.Prefix}}/{{.Route}}/1", `{"name":"renamed"}`)
+	rec = send{{.Pascal}}(h, "PUT", one, `{"name":"renamed"}`)
 	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "renamed") {
 		t.Fatalf("update: status = %d, body = %s", rec.Code, rec.Body)
 	}
@@ -76,19 +105,26 @@ func Test{{.Pascal}}CRUD(t *testing.T) {
 	// List
 	rec = send{{.Pascal}}(h, "GET", "{{.Prefix}}/{{.Route}}", "")
 	var list []models.{{.Pascal}}
-	if err := json.Unmarshal(rec.Body.Bytes(), &list); err != nil || len(list) != 1 || list[0].Name != "renamed" {
+	if err := json.Unmarshal(rec.Body.Bytes(), &list); err != nil {
 		t.Fatalf("list: unexpected body %s (err: %v)", rec.Body, err)
+	}
+	found := false
+	for _, item := range list {
+		found = found || (item.ID == created.ID && item.Name == "renamed")
+	}
+	if !found {
+		t.Fatalf("list: the renamed item is missing from %s", rec.Body)
 	}
 
 	// Delete
-	rec = send{{.Pascal}}(h, "DELETE", "{{.Prefix}}/{{.Route}}/1", "")
+	rec = send{{.Pascal}}(h, "DELETE", one, "")
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("delete: status = %d, want 204", rec.Code)
 	}
-	if rec = send{{.Pascal}}(h, "GET", "{{.Prefix}}/{{.Route}}/1", ""); rec.Code != http.StatusNotFound {
+	if rec = send{{.Pascal}}(h, "GET", one, ""); rec.Code != http.StatusNotFound {
 		t.Fatalf("get after delete: status = %d, want 404", rec.Code)
 	}
-	if rec = send{{.Pascal}}(h, "DELETE", "{{.Prefix}}/{{.Route}}/1", ""); rec.Code != http.StatusNotFound {
+	if rec = send{{.Pascal}}(h, "DELETE", one, ""); rec.Code != http.StatusNotFound {
 		t.Fatalf("deleting twice: status = %d, want 404", rec.Code)
 	}
 }
@@ -110,7 +146,7 @@ func Test{{.Pascal}}RejectsInvalidInput(t *testing.T) {
 	if rec := send{{.Pascal}}(h, "GET", "{{.Prefix}}/{{.Route}}/abc", ""); rec.Code != http.StatusBadRequest {
 		t.Fatalf("non-numeric id: status = %d, want 400", rec.Code)
 	}
-	if rec := send{{.Pascal}}(h, "GET", "{{.Prefix}}/{{.Route}}/999", ""); rec.Code != http.StatusNotFound {
+	if rec := send{{.Pascal}}(h, "GET", "{{.Prefix}}/{{.Route}}/2147483647", ""); rec.Code != http.StatusNotFound {
 		t.Fatalf("unknown id: status = %d, want 404", rec.Code)
 	}
 }

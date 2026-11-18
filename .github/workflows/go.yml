@@ -31,6 +31,25 @@ jobs:
   generated-projects:
     name: Generated projects build against the framework
     runs-on: ubuntu-latest
+    # The generated tests of PostgreSQL and MySQL projects run against these
+    # (TEST_DATABASE_URL), not only against SQLite.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: generated_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: generated_test
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd "mysqladmin ping -proot" --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
     - uses: actions/checkout@v4
 
@@ -47,6 +66,8 @@ jobs:
     - name: Create, build, vet and test a project from every template
       env:
         AEMEATH_FRAMEWORK_DIR: ${{ github.workspace }}/.framework
+        AEMEATH_TEST_POSTGRES_URL: postgres://postgres:postgres@localhost:5432/generated_test?sslmode=disable
+        AEMEATH_TEST_MYSQL_URL: root:root@tcp(localhost:3306)/generated_test
       run: go test ./internal/cli -run TestGeneratedProjectsBuild -v
 
   release-config:
