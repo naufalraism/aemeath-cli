@@ -3,6 +3,7 @@
 ## Unreleased
 
 - **`GET /` of the api and db templates answers `/` only** (`"/{$}"`). It was registered as `"/"`, which net/http reads as "every path": `/does-not-exist`, `/admin/.env` and `/tasks/` answered `200 Hello from Aemeath!` instead of `404`.
+- **The api and db templates have a `main_test.go`**, so `go test ./...` in a new api project tests something (it printed `[no test files]`): `GET /` answers the greeting and other paths `404`. The route moved into a `hello(app)` function that the test can register.
 
 ## [0.4.0] - 2026-11-18
 

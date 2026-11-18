@@ -153,6 +153,9 @@ func runNew(cmd *cobra.Command, target, module, replace, template, database stri
 		{"env.example.tmpl", ".env.example"},
 		{"readme.md.tmpl", "README.md"},
 	}
+	if !tpl.Web {
+		files = append(files, struct{ tmpl, dest string }{"main_test.go.tmpl", "main_test.go"})
+	}
 	for _, f := range files {
 		if err := renderTo(f.tmpl, filepath.Join(target, f.dest), data, false); err != nil {
 			return err
