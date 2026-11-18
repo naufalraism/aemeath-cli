@@ -32,14 +32,14 @@ func TestNewTemplates(t *testing.T) {
 		"api": {
 			files:     []string{"go.mod", "main.go", ".gitignore", ".env.example", "README.md"},
 			absent:    []string{"web", "handlers", "models"},
-			mainHas:   []string{`"/"`, "HelloOut", "// aemeath:plugins", "// aemeath:handlers"},
-			mainLacks: []string{"db.Open", "web/dist"},
+			mainHas:   []string{`"/{$}"`, "HelloOut", "// aemeath:plugins", "// aemeath:handlers"},
+			mainLacks: []string{"db.Open", "web/dist", `GET(app, "/",`},
 		},
 		"db": {
 			files:     []string{"main.go", "handlers/task.go", "handlers/task_test.go", "models/task.go"},
 			absent:    []string{"web"},
-			mainHas:   []string{`db.Open("app.db")`, "handlers.TaskHandler(app)", "HelloOut"},
-			mainLacks: []string{"web/dist"},
+			mainHas:   []string{`db.Open("app.db")`, "handlers.TaskHandler(app)", "HelloOut", `"/{$}"`},
+			mainLacks: []string{"web/dist", `GET(app, "/",`},
 		},
 		"fullstack": {
 			files: []string{

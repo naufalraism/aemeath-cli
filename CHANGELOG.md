@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **`GET /` of the api and db templates answers `/` only** (`"/{$}"`). It was registered as `"/"`, which net/http reads as "every path": `/does-not-exist`, `/admin/.env` and `/tasks/` answered `200 Hello from Aemeath!` instead of `404`.
+
 ## [0.4.0] - 2026-11-18
 
 - `internal/cli` now tests the claims the README makes about the commands (every documented flag, the name forms, that nothing is written when a destination exists, that `main.go` is never edited twice or left half-edited, and what `dev` watches).
