@@ -51,19 +51,21 @@ func TestModulePath(t *testing.T) {
 
 // Every Go template must produce code that parses, for awkward names too.
 func TestGoTemplatesProduceValidCode(t *testing.T) {
-	templates := []string{"handler.go.tmpl", "handler_db.go.tmpl", "test.go.tmpl", "test_db.go.tmpl", "model.go.tmpl", "middleware.go.tmpl", "job.go.tmpl", "main.go.tmpl"}
+	templates := []string{"handler.go.tmpl", "handler_db.go.tmpl", "test.go.tmpl", "test_db.go.tmpl", "model.go.tmpl", "middleware.go.tmpl", "job.go.tmpl", "main.go.tmpl", "main_test.go.tmpl"}
 	for _, raw := range []string{"Product", "product-item", "APIKey", "category", "type", "map"} {
 		names, err := parseName(raw)
 		if err != nil {
 			t.Fatal(err)
 		}
 		for _, prefix := range []string{"", "/api/v1"} {
-			for _, web := range []bool{false, true} {
+			for i, web := range []bool{false, true, false} {
+				database := []string{dbSQLite, dbPostgres, dbMySQL}[i]
 				data := struct {
 					Names
 					Module, Title, Prefix string
 					Web, DB               bool
-				}{names, "example.com/app", "app", prefix, web, true}
+					Database              string
+				}{names, "example.com/app", "app", prefix, web, true, database}
 				for _, tmpl := range templates {
 					out, err := render(tmpl, data)
 					if err != nil {
