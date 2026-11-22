@@ -310,3 +310,19 @@ func TestGeneratedWebFilesAreNotGitIgnored(t *testing.T) {
 		t.Error("a root client.ts should stay ignored")
 	}
 }
+
+// A new user does not know that "aemeath help" lists every command, so the
+// last lines of "aemeath new" say so, whatever the template.
+func TestNewPointsToHelp(t *testing.T) {
+	for _, template := range []string{"api", "db", "fullstack"} {
+		t.Run(template, func(t *testing.T) {
+			out, err := runNewForTest(t, filepath.Join(t.TempDir(), "demo"), template)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(out, "aemeath help") {
+				t.Fatalf("the output of new does not mention 'aemeath help':\n%s", out)
+			}
+		})
+	}
+}

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **`aemeath new` ends with `💡 All commands: aemeath help`**, for every template. Nothing in the output or the README told a new user that `aemeath help` lists the commands.
+
 ## [0.4.1] - 2026-11-18
 
 - **`GET /` of the api and db templates answers `/` only** (`"/{$}"`). It was registered as `"/"`, which net/http reads as "every path": `/does-not-exist`, `/admin/.env` and `/tasks/` answered `200 Hello from Aemeath!` instead of `404`.
