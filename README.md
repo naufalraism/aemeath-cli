@@ -88,6 +88,30 @@ aemeath dev --ts-out web/src/api    # also rewrite the TypeScript files after ev
 - If a build fails, the previous version keeps running until you fix the error.
 - Changes are debounced, new directories are watched, and `_test.go` files, hidden folders, `vendor`, `node_modules`, `tmp` and `uploads` are ignored.
 
+### Help and tab completion
+
+```bash
+aemeath help                 # list every command
+aemeath <command> --help     # flags of one command, e.g. aemeath generate api --help
+```
+
+A mistyped command suggests the closest one (`aemeath genrate` → "Did you mean this? generate").
+
+Tab completion for PowerShell, in the current window:
+
+```powershell
+aemeath completion powershell | Out-String | Invoke-Expression
+```
+
+To keep it in every new window, add that line to your PowerShell profile once:
+
+```powershell
+if (!(Test-Path $PROFILE)) { New-Item -Type File -Path $PROFILE -Force }
+Add-Content $PROFILE 'aemeath completion powershell | Out-String | Invoke-Expression'
+```
+
+Bash, Zsh and Fish work the same way: see `aemeath completion <shell> --help`.
+
 ## 🧪 Development
 
 ```bash
