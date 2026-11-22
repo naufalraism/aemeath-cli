@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.4.2] - 2026-11-22
+
 - **`aemeath new` ends with `💡 All commands: aemeath help`**, for every template. Nothing in the output or the README told a new user that `aemeath help` lists the commands.
 - **README: "Help and tab completion"**: `aemeath help`, `aemeath <command> --help`, and how to turn on tab completion in PowerShell (including the `$PROFILE` line that keeps it).
 
