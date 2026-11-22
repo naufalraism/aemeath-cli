@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **`generate docker`: `# env_file: .env` was inside the `environment:` block.** Removing the `#`, as the comment says, made `env_file` an environment variable instead of the service option, so `.env` was never read and its secrets never reached the app, without any error (proven with `docker compose config` on Windows). The two comment lines are now at the service level.
+
 ## [0.4.2] - 2026-11-22
 
 - **`aemeath new` ends with `💡 All commands: aemeath help`**, for every template. Nothing in the output or the README told a new user that `aemeath help` lists the commands.

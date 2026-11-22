@@ -326,3 +326,31 @@ func TestNewPointsToHelp(t *testing.T) {
 		})
 	}
 }
+
+// The compose file says "Put secrets in a .env file and uncomment" above
+// "# env_file: .env". That line sat inside the environment: block, so removing
+// the "#" made env_file an environment variable named "env_file" instead of
+// the service option: .env was never read and the secrets never reached the
+// app, without any error. YAML nesting is indentation, so after uncommenting,
+// env_file must be indented like the other service keys (restart:), not like
+// the variables under environment:.
+func TestComposeEnvFileIsAServiceOptionOnceUncommented(t *testing.T) {
+	for _, kind := range []string{"sqlite", "postgres", "mysql"} {
+		t.Run(kind, func(t *testing.T) {
+			compose := strings.Replace(render2(t, "", "docker-compose.yml.tmpl", kind), "# env_file: .env", "env_file: .env", 1)
+			indent := func(key string) int {
+				for _, line := range strings.Split(compose, "\n") {
+					if strings.TrimSpace(line) == key || strings.HasPrefix(strings.TrimSpace(line), key+" ") {
+						return len(line) - len(strings.TrimLeft(line, " "))
+					}
+				}
+				t.Fatalf("no %q line in:\n%s", key, compose)
+				return -1
+			}
+			if got, want := indent("env_file:"), indent("restart:"); got != want {
+				t.Errorf("uncommented env_file: is indented %d spaces, the service keys %d (environment variables %d): it would be read as a variable, not as the option:\n%s",
+					got, want, indent(`PORT: "3000"`), compose)
+			}
+		})
+	}
+}
