@@ -219,7 +219,8 @@ func runNew(cmd *cobra.Command, target, module, replace, template, database stri
 func printNextSteps(out io.Writer, target string, tpl projectTemplate) {
 	if tpl.Web {
 		outf(out, "👉 Next, in two terminals:\n     cd %s && aemeath dev --ts-out web/src/api\n     cd %s/web && npm install && npm run dev      (then open http://localhost:5173)\n", target, target)
-		return
+	} else {
+		outf(out, "👉 Next: cd %s && aemeath dev\n", target)
 	}
-	outf(out, "👉 Next: cd %s && aemeath dev\n", target)
+	outln(out, "💡 All commands: aemeath help   (details: aemeath <command> --help)")
 }

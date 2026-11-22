@@ -262,3 +262,36 @@ func TestDevIgnoresAndStopClaims(t *testing.T) {
 		}
 	})
 }
+
+// The README tells new users how to list the commands and how to turn on
+// tab completion, and both commands it shows really work.
+func TestREADMEExplainsHelpAndCompletion(t *testing.T) {
+	readme, err := os.ReadFile(filepath.Join("..", "..", "README.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, claim := range []string{"aemeath help", "aemeath <command> --help", "aemeath completion powershell", "$PROFILE"} {
+		if !strings.Contains(string(readme), claim) {
+			t.Errorf("README.md does not mention %q", claim)
+		}
+	}
+	for _, args := range [][]string{{"help"}, {"completion", "powershell"}} {
+		root := newRootCmd()
+		var out bytes.Buffer
+		root.SetOut(&out)
+		root.SetErr(&out)
+		root.SetArgs(args)
+		if err := root.Execute(); err != nil {
+			t.Fatalf("aemeath %s: %v", strings.Join(args, " "), err)
+		}
+		if args[0] == "help" {
+			for _, c := range []string{"new", "dev", "ts", "generate", "completion"} {
+				if !strings.Contains(out.String(), "  "+c+" ") {
+					t.Errorf("aemeath help does not list %q:\n%s", c, out.String())
+				}
+			}
+		} else if !strings.Contains(out.String(), "Register-ArgumentCompleter") {
+			t.Errorf("aemeath completion powershell printed no PowerShell completer")
+		}
+	}
+}
