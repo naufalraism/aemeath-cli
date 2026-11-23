@@ -1,0 +1,29 @@
+name: Bug report
+description: A command does not work as documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+    validations: { required: true }
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and output
+      description: The exact command you ran and everything it printed.
+      render: shell
+    validations: { required: true }
+  - type: input
+    id: version
+    attributes:
+      label: CLI version
+      description: The output of `aemeath --version`.
+    validations: { required: true }
+  - type: input
+    id: go
+    attributes:
+      label: Go version and OS
+      placeholder: "go1.27.3 windows/amd64"
+    validations: { required: true }
