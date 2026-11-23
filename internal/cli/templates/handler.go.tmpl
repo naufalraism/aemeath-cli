@@ -48,7 +48,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 	group := app.Group("{{.Prefix}}/{{.Route}}")
 
 	// GET {{.Prefix}}/{{.Route}}
-	aemeath.GroupGET(group, "/", func(c *aemeath.Ctx, _ struct{}) ([]{{.Pascal}}, error) {
+	aemeath.GET(group, "/", func(c *aemeath.Ctx, _ struct{}) ([]{{.Pascal}}, error) {
 		store.mu.RLock()
 		defer store.mu.RUnlock()
 		out := make([]{{.Pascal}}, 0, len(store.items))
@@ -60,7 +60,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 	}, aemeath.Summary("List {{.Pascal}} items"), aemeath.Tags("{{.Pascal}}"))
 
 	// POST {{.Prefix}}/{{.Route}}
-	aemeath.GroupPOST(group, "/", func(c *aemeath.Ctx, in Create{{.Pascal}}In) ({{.Pascal}}, error) {
+	aemeath.POST(group, "/", func(c *aemeath.Ctx, in Create{{.Pascal}}In) ({{.Pascal}}, error) {
 		store.mu.Lock()
 		defer store.mu.Unlock()
 		item := {{.Pascal}}{ID: store.nextID, Name: in.Name}
@@ -70,7 +70,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 	}, aemeath.Summary("Create a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"), aemeath.Status(201))
 
 	// GET {{.Prefix}}/{{.Route}}/{id}
-	aemeath.GroupGET(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) ({{.Pascal}}, error) {
+	aemeath.GET(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) ({{.Pascal}}, error) {
 		store.mu.RLock()
 		defer store.mu.RUnlock()
 		item, ok := store.items[in.ID]
@@ -81,7 +81,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 	}, aemeath.Summary("Get a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"))
 
 	// PUT {{.Prefix}}/{{.Route}}/{id}
-	aemeath.GroupPUT(group, "/{id}", func(c *aemeath.Ctx, in Update{{.Pascal}}In) ({{.Pascal}}, error) {
+	aemeath.PUT(group, "/{id}", func(c *aemeath.Ctx, in Update{{.Pascal}}In) ({{.Pascal}}, error) {
 		store.mu.Lock()
 		defer store.mu.Unlock()
 		item, ok := store.items[in.ID]
@@ -94,7 +94,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 	}, aemeath.Summary("Update a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"))
 
 	// DELETE {{.Prefix}}/{{.Route}}/{id}
-	aemeath.GroupDELETE(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) (struct{}, error) {
+	aemeath.DELETE(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) (struct{}, error) {
 		store.mu.Lock()
 		defer store.mu.Unlock()
 		if _, ok := store.items[in.ID]; !ok {

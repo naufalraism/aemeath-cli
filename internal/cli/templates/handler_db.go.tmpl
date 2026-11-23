@@ -42,7 +42,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 	group := app.Group("{{.Prefix}}/{{.Route}}")
 
 	// GET {{.Prefix}}/{{.Route}}
-	aemeath.GroupGET(group, "/", func(c *aemeath.Ctx, _ struct{}) ([]models.{{.Pascal}}, error) {
+	aemeath.GET(group, "/", func(c *aemeath.Ctx, _ struct{}) ([]models.{{.Pascal}}, error) {
 		items := []models.{{.Pascal}}{}
 		if err := db.From(c).Order("id").Find(&items).Error; err != nil {
 			return nil, err
@@ -51,7 +51,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 	}, aemeath.Summary("List {{.Pascal}} items"), aemeath.Tags("{{.Pascal}}"))
 
 	// POST {{.Prefix}}/{{.Route}}
-	aemeath.GroupPOST(group, "/", func(c *aemeath.Ctx, in Create{{.Pascal}}In) (models.{{.Pascal}}, error) {
+	aemeath.POST(group, "/", func(c *aemeath.Ctx, in Create{{.Pascal}}In) (models.{{.Pascal}}, error) {
 		item := models.{{.Pascal}}{Name: in.Name}
 		if err := db.From(c).Create(&item).Error; err != nil {
 			return models.{{.Pascal}}{}, err
@@ -60,7 +60,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 	}, aemeath.Summary("Create a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"), aemeath.Status(201))
 
 	// GET {{.Prefix}}/{{.Route}}/{id}
-	aemeath.GroupGET(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) (models.{{.Pascal}}, error) {
+	aemeath.GET(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) (models.{{.Pascal}}, error) {
 		var item models.{{.Pascal}}
 		if err := db.From(c).First(&item, in.ID).Error; err != nil {
 			return item, notFoundOr{{.Pascal}}(err)
@@ -69,7 +69,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 	}, aemeath.Summary("Get a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"))
 
 	// PUT {{.Prefix}}/{{.Route}}/{id}
-	aemeath.GroupPUT(group, "/{id}", func(c *aemeath.Ctx, in Update{{.Pascal}}In) (models.{{.Pascal}}, error) {
+	aemeath.PUT(group, "/{id}", func(c *aemeath.Ctx, in Update{{.Pascal}}In) (models.{{.Pascal}}, error) {
 		var item models.{{.Pascal}}
 		if err := db.From(c).First(&item, in.ID).Error; err != nil {
 			return item, notFoundOr{{.Pascal}}(err)
@@ -82,7 +82,7 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 	}, aemeath.Summary("Update a {{.Pascal}}"), aemeath.Tags("{{.Pascal}}"))
 
 	// DELETE {{.Prefix}}/{{.Route}}/{id}
-	aemeath.GroupDELETE(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) (struct{}, error) {
+	aemeath.DELETE(group, "/{id}", func(c *aemeath.Ctx, in {{.Pascal}}ByIDIn) (struct{}, error) {
 		result := db.From(c).Delete(&models.{{.Pascal}}{}, in.ID)
 		if result.Error != nil {
 			return struct{}{}, result.Error
