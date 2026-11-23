@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -51,6 +50,7 @@ func (r *runner) start() error {
 	cmd.Stdout = r.stdout
 	cmd.Stderr = r.stderr
 	cmd.Env = os.Environ()
+	prepareServer(cmd)
 	if err := cmd.Start(); err != nil {
 		return err
 	}
@@ -69,10 +69,8 @@ func (r *runner) stop(grace time.Duration) {
 	if r.cmd == nil {
 		return
 	}
-	if runtime.GOOS == "windows" {
-		_ = r.cmd.Process.Kill() // Windows has no SIGTERM for processes
-	} else {
-		_ = r.cmd.Process.Signal(syscall.SIGTERM)
+	if err := askToStop(r.cmd.Process); err != nil {
+		_ = r.cmd.Process.Kill()
 	}
 	select {
 	case <-r.done:
