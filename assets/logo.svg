@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Aemeath CLI logo">
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 53 L32 13 L49 53" stroke="#ec4899" stroke-width="6.5"/>
+    <path d="M27 46 L37 46" stroke="#22d3ee" stroke-width="4.5"/>
+  </g>
+</svg>
