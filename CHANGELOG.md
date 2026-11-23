@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **README: the CLI's logo** (the framework's A with a terminal cursor `_` in place of the caret) and links to the website, the CLI documentation and the framework.
+
 ## [0.4.3] - 2026-11-22
 
 - **`generate docker`: `# env_file: .env` was inside the `environment:` block.** Removing the `#`, as the comment says, made `env_file` an environment variable instead of the service option, so `.env` was never read and its secrets never reached the app, without any error (proven with `docker compose config` on Windows). The two comment lines are now at the service level.

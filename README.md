@@ -1,6 +1,12 @@
+<p align="center">
+  <img src="assets/logo.svg" width="96" alt="Aemeath CLI logo">
+</p>
+
 # Aemeath CLI 🚀
 
 The official command line interface for the [Aemeath Go framework](https://github.com/naufalraism/aemeath): create projects, generate code, and run a hot-reload dev server.
+
+🌐 [Website](https://aemeath-website.vercel.app) · 📚 [CLI documentation](https://naufalraism.github.io/aemeath/cli/overview) · 🧩 [Framework](https://github.com/naufalraism/aemeath)
 
 ## 📦 Installation
 
