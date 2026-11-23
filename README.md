@@ -125,6 +125,8 @@ go test -race ./...
 go test -short ./...   # skips the tests that build Go programs
 ```
 
+Before a pull request, read [CONTRIBUTING.md](CONTRIBUTING.md). Report security problems privately, as [SECURITY.md](SECURITY.md) explains.
+
 Releases are built by [GoReleaser](https://goreleaser.com) when a `v*` tag is pushed (`.goreleaser.yaml`, `.github/workflows/release.yml`).
 
 ## 📝 License

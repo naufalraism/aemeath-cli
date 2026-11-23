@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **How to contribute:** `CONTRIBUTING.md`, `SECURITY.md` (report vulnerabilities privately), `CODE_OF_CONDUCT.md`, and templates for issues and pull requests.
+
 ## [0.4.4] - 2026-11-23
 
 - **`aemeath dev` on Windows lets the server shut down** on reload and on exit, so its `OnShutdown` hooks run (closing the database, flushing traces). It used to kill the process because Windows has no SIGTERM; the server now runs in its own process group and receives Ctrl+Break, which Go programs see as `os.Interrupt`. Without a console it still falls back to killing the process.
