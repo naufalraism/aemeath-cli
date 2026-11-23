@@ -147,3 +147,52 @@ func TestRelevantAndIgnored(t *testing.T) {
 		t.Fatal("ignoredDir is wrong")
 	}
 }
+
+// gracefulSource is a server that records whether it was asked to stop
+// (SIGTERM, or os.Interrupt: Ctrl+C or Ctrl+Break on Windows) and got to run
+// its shutdown code, instead of being killed.
+const gracefulSource = `package main
+
+import (
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+)
+
+func main() {
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+	_ = os.WriteFile("ready", nil, 0o644)
+	select {
+	case <-ch:
+		_ = os.WriteFile("graceful", nil, 0o644) // where the app's shutdown hooks run
+	case <-time.After(30 * time.Second):
+	}
+}
+`
+
+// On reload and on exit, aemeath dev must let the server shut down (its
+// OnShutdown hooks: closing the database, flushing traces), not kill it.
+// On Windows it used Process.Kill, so the hooks never ran.
+func TestDevStopLetsTheServerShutDown(t *testing.T) {
+	if testing.Short() {
+		t.Skip("builds a Go program")
+	}
+	dir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module gracefultest\n\ngo 1.22\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(dir, "main.go"), []byte(gracefulSource), 0o644)
+	var out lockedBuffer
+	r := &runner{dir: dir, pkg: ".", bin: filepath.Join(dir, binaryName("app")), stdout: &out, stderr: &out}
+	if err := r.build(context.Background()); err != nil {
+		t.Fatalf("build: %v\n%s", err, out.String())
+	}
+	if err := r.start(); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "the server to start", func() bool { _, err := os.Stat(filepath.Join(dir, "ready")); return err == nil })
+	r.stop(10 * time.Second)
+	if _, err := os.Stat(filepath.Join(dir, "graceful")); err != nil {
+		t.Fatalf("the server was stopped without running its shutdown code (killed instead of asked to stop)")
+	}
+}
