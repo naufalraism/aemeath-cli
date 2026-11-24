@@ -1,8 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Security vulnerability
-    url: https://github.com/naufalraism/aemeath-cli/security/advisories/new
-    about: Please report security problems privately, not in a public issue.
   - name: A problem with the framework itself
     url: https://github.com/naufalraism/aemeath/issues/new/choose
     about: Routing, validation, middleware and plugins live in the framework repository.

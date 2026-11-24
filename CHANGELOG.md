@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Generated handlers register routes with `aemeath.GET(group, …)`** instead of `GroupGET`, which the framework deprecated in v0.6.0. Needs framework v0.6.0 or later.
+
 - **How to contribute:** `CONTRIBUTING.md`, `SECURITY.md` (report vulnerabilities privately), `CODE_OF_CONDUCT.md`, and templates for issues and pull requests.
 
 ## [0.4.4] - 2026-11-23
