@@ -2,9 +2,13 @@
 
 ## Unreleased
 
+## [0.5.0] - 2026-11-24
+
+Needs framework **v0.6.0** or later: `aemeath new` fetches the latest framework, so a project created now gets it; in an existing project run `go get github.com/naufalraism/aemeath@v0.6.0` before `aemeath generate`.
+
 - **Generated handlers register routes with `aemeath.GET(group, …)`** instead of `GroupGET`, which the framework deprecated in v0.6.0. Needs framework v0.6.0 or later.
 
-- **How to contribute:** `CONTRIBUTING.md`, `SECURITY.md` (report vulnerabilities privately), `CODE_OF_CONDUCT.md`, and templates for issues and pull requests.
+- **How to contribute:** `CONTRIBUTING.md`, `SECURITY.md` (report vulnerabilities privately), `CODE_OF_CONDUCT.md`, and templates for issues and pull requests. The new-issue page lists the private security report once (GitHub adds it).
 
 ## [0.4.4] - 2026-11-23
 
