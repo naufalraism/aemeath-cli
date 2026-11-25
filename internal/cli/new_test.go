@@ -354,3 +354,37 @@ func TestComposeEnvFileIsAServiceOptionOnceUncommented(t *testing.T) {
 		})
 	}
 }
+
+// The generated server serves its API docs publicly. The comment right above
+// the call must say so and point to the guide, so the choice is visible
+// before the project goes to production.
+func TestDocsCallExplainsItIsPublic(t *testing.T) {
+	for _, name := range []string{"api", "db", "fullstack"} {
+		t.Run(name, func(t *testing.T) {
+			target := filepath.Join(t.TempDir(), "demo")
+			if out, err := runNewForTest(t, target, name); err != nil {
+				t.Fatalf("%v\n%s", err, out)
+			}
+			lines := strings.Split(read(t, target, "main.go"), "\n")
+			at := -1
+			for i, l := range lines {
+				if strings.HasPrefix(strings.TrimSpace(l), "app.EnableDocs(") {
+					at = i
+				}
+			}
+			if at < 0 {
+				t.Fatal("main.go does not call app.EnableDocs")
+			}
+			var comment []string
+			for i := at - 1; i >= 0 && strings.HasPrefix(strings.TrimSpace(lines[i]), "//"); i-- {
+				comment = append(comment, lines[i])
+			}
+			text := strings.Join(comment, "\n")
+			for _, want := range []string{"public", "admin.EnableDocs", "guide/auth#api-docs-in-production"} {
+				if !strings.Contains(text, want) {
+					t.Errorf("the comment above app.EnableDocs lacks %q:\n%s", want, text)
+				}
+			}
+		})
+	}
+}
