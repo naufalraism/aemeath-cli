@@ -130,12 +130,12 @@ func TestWireDatabasePluginThenHandlersKeepsTheOrder(t *testing.T) {
 	}
 	got := readMain(t, dir)
 	mustParse(t, got)
-	for _, want := range []string{`db.Open("app.db")`, "aejobs.New(aejobs.WithWorkers(4))", `aejobs "github.com/naufalraism/aemeath/jobs"`, `"github.com/naufalraism/aemeath/db"`} {
+	for _, want := range []string{`sqlite.Open("app.db")`, "aejobs.New(aejobs.WithWorkers(4))", `aejobs "github.com/naufalraism/aemeath/jobs"`, `"github.com/naufalraism/aemeath/db/sqlite"`} {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing %q:\n%s", want, got)
 		}
 	}
-	if strings.Index(got, "db.Open") >= strings.Index(got, "handlers.TaskHandler") {
+	if strings.Index(got, "sqlite.Open") >= strings.Index(got, "handlers.TaskHandler") {
 		t.Errorf("the database plugin must be registered before the handlers that use it:\n%s", got)
 	}
 	if strings.Count(got, `"log"`) != 1 {
@@ -306,5 +306,19 @@ func TestWireHandlesWindowsLineEndings(t *testing.T) {
 	}
 	if got := readMain(t, dir); !strings.Contains(got, "handlers.TaskHandler(app)") {
 		t.Errorf("the call was not added:\n%s", got)
+	}
+}
+
+// A project created before framework v0.12.0 opens SQLite with db.Open.
+// Generating a database resource there must not register a second plugin.
+func TestWireDatabaseSeesTheOldSQLiteOpener(t *testing.T) {
+	old := strings.Replace(templateMain, "\t// aemeath:plugins\n", "\t// aemeath:plugins\n\tif database, err := db.Open(\"app.db\"); err != nil {\n\t\tlog.Fatal(err)\n\t} else if err := app.RegisterPlugin(database); err != nil {\n\t\tlog.Fatal(err)\n\t}\n", 1)
+	dir := writeMain(t, old)
+	res, err := wireMain(dir, dbPluginWire(dbSQLite))
+	if err != nil || res.Outcome != alreadyWired {
+		t.Fatalf("res = %+v, err = %v; want alreadyWired", res, err)
+	}
+	if got := readMain(t, dir); strings.Contains(got, "sqlite.Open") {
+		t.Errorf("a second database plugin was added:\n%s", got)
 	}
 }

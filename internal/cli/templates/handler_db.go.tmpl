@@ -29,12 +29,12 @@ type Update{{.Pascal}}In struct {
 
 // {{.Pascal}}Handler registers the CRUD routes for {{.Pascal}} under {{.Prefix}}/{{.Route}}.
 //
-// It needs the database plugin to be registered first (db.Open + app.RegisterPlugin)
+// It needs the database plugin to be registered first (sqlite.Open, postgres.Open or mysql.Open, then app.RegisterPlugin)
 // and creates its own table when it is registered.
 func {{.Pascal}}Handler(app *aemeath.App) {
 	database, ok := aemeath.Lookup[*gorm.DB](app)
 	if !ok {
-		panic("handlers.{{.Pascal}}Handler: register the database plugin before the handlers (db.Open and app.RegisterPlugin)")
+		panic("handlers.{{.Pascal}}Handler: register the database plugin before the handlers (sqlite.Open and app.RegisterPlugin)")
 	}
 	if err := database.AutoMigrate(&models.{{.Pascal}}{}); err != nil {
 		panic("handlers.{{.Pascal}}Handler: migrating the {{.Pascal}} table: " + err.Error())
