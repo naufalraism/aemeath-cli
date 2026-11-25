@@ -14,12 +14,15 @@ import (
 	"testing"
 
 	"github.com/naufalraism/aemeath"
+{{- if ne .Database "sqlite"}}
 	"github.com/naufalraism/aemeath/db"
+{{- end}}
 {{- if eq .Database "postgres"}}
 	"github.com/naufalraism/aemeath/db/postgres"
 {{- else if eq .Database "mysql"}}
 	"github.com/naufalraism/aemeath/db/mysql"
 {{- end}}
+	"github.com/naufalraism/aemeath/db/sqlite"
 
 	"{{.Module}}/handlers"
 	"{{.Module}}/models"
@@ -37,14 +40,14 @@ import (
 func new{{.Pascal}}App(t *testing.T) http.Handler {
 	t.Helper()
 {{- if eq .Database "sqlite"}}
-	database, err := db.Open(filepath.Join(t.TempDir(), "test.db"))
+	database, err := sqlite.Open(filepath.Join(t.TempDir(), "test.db"))
 {{- else}}
 	var database *db.Plugin
 	var err error
 	if dsn := os.Getenv("TEST_DATABASE_URL"); dsn != "" {
 		database, err = {{.Database}}.Open(dsn)
 	} else {
-		database, err = db.Open(filepath.Join(t.TempDir(), "test.db"))
+		database, err = sqlite.Open(filepath.Join(t.TempDir(), "test.db"))
 	}
 {{- end}}
 	if err != nil {

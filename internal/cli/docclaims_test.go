@@ -184,7 +184,7 @@ func TestGenerateClaims(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		plugins := bytes.Index(main, []byte("db.Open("))
+		plugins := bytes.Index(main, []byte("sqlite.Open("))
 		handlers := bytes.Index(main, []byte("handlers.ProductHandler(app)"))
 		if plugins < 0 || handlers < 0 || plugins > handlers {
 			t.Errorf("plugin at %d, handler at %d:\n%s", plugins, handlers, main)

@@ -135,7 +135,7 @@ func TestGenerateResourceWithADatabase(t *testing.T) {
 		t.Error("the test must use the prefix")
 	}
 	main := read(t, dir, "main.go")
-	if strings.Index(main, `db.Open("app.db")`) >= strings.Index(main, "handlers.ProductHandler(app)") {
+	if strings.Index(main, `sqlite.Open("app.db")`) >= strings.Index(main, "handlers.ProductHandler(app)") {
 		t.Errorf("the database plugin must be registered before the handlers:\n%s", main)
 	}
 	assertParses(t, dir, "main.go", "handlers/product.go", "handlers/product_test.go")
@@ -144,7 +144,7 @@ func TestGenerateResourceWithADatabase(t *testing.T) {
 	if err := generateResource(&out, resourceOpts{Root: dir, Name: "Order", DB: true, Prefix: "/api"}); err != nil {
 		t.Fatal(err)
 	}
-	if strings.Count(read(t, dir, "main.go"), `db.Open("app.db")`) != 1 {
+	if strings.Count(read(t, dir, "main.go"), `sqlite.Open("app.db")`) != 1 {
 		t.Error("the database plugin must be registered only once")
 	}
 }
@@ -248,7 +248,7 @@ func TestGenerateTestOnlyAndSimpleFiles(t *testing.T) {
 	if err := generateTestOnly(&bytes.Buffer{}, dir, "Task", "/api", true, false); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(read(t, dir, "handlers/task_test.go"), "db.Open(") {
+	if !strings.Contains(read(t, dir, "handlers/task_test.go"), "sqlite.Open(") {
 		t.Error("--db must generate the database test")
 	}
 	if err := generateSimple(&bytes.Buffer{}, dir, simpleGen{tmpl: "middleware.go.tmpl", dir: "middleware", suffix: ".go"}, "auth", false); err != nil {

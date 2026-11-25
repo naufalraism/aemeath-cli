@@ -54,7 +54,7 @@ func detectDatabase(root string) string {
 // handler migrates its own model, so the plugin is opened without models.
 // PostgreSQL and MySQL read their connection string from DATABASE_URL.
 func dbPluginWire(kind string) wireSpec {
-	open, imp := `db.Open("app.db")`, aemeathModule+"/db"
+	open, imp := `sqlite.Open("app.db")`, aemeathModule+"/db/sqlite"
 	switch kind {
 	case dbPostgres:
 		open, imp = `postgres.Open(os.Getenv("DATABASE_URL"))`, aemeathModule+"/db/postgres"
@@ -75,7 +75,7 @@ func dbPluginWire(kind string) wireSpec {
 }`
 		},
 		// Any database plugin already registered counts: never add a second one.
-		Already: regexp.MustCompile(`\bdb\.Open\(|\bpostgres\.Open\(|\bmysql\.Open\(|\bdb\.New\(`),
+		Already: regexp.MustCompile(`\bsqlite\.Open\(|\bdb\.Open\(|\bpostgres\.Open\(|\bmysql\.Open\(|\bdb\.New\(`),
 		After:   regexp.MustCompile(`RegisterPlugin\(`),
 		Marker:  markerPlugins,
 	}
