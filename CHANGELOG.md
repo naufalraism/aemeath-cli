@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [0.6.0] - 2026-11-25
+
+Needs framework **v0.12.0** or later: `aemeath new` fetches the latest framework, so a project created now gets it; in an existing project run `go get github.com/naufalraism/aemeath@v0.12.0` and change `db.Open("app.db")` to `sqlite.Open("app.db")` (import `github.com/naufalraism/aemeath/db/sqlite`) before `aemeath generate`.
+
 - **SQLite projects open the database with `sqlite.Open("app.db")`** from `github.com/naufalraism/aemeath/db/sqlite`, instead of `db.Open`, which framework v0.12.0 removed so that PostgreSQL and MySQL projects no longer compile SQLite. Generated tests use it too. `aemeath generate api --db` still recognises a project that opens SQLite with the old `db.Open` and does not register a second database plugin.
 
 - **The generated `main.go` says the API docs are public**, in the comment above `app.EnableDocs`, and shows how to serve them only to admins with `admin.EnableDocs` (framework v0.10.0 or later), with a link to the guide. Nothing changes in what the server does.
