@@ -61,6 +61,16 @@ func main() {
 {{end}}
 	// Interactive API docs at /docs. /client.ts, /schemas.ts (Zod) and /hooks.ts
 	// (React Query) are generated from the same Go types.
+	//
+	// They are public: anyone can read your routes and their types. Before
+	// production, decide whether that is fine. To show them only to admins,
+	// register them on a group with your own check instead:
+	//
+	//	admin := app.Group("/admin", requireAdmin)
+	//	admin.EnableDocs(aemeath.Info{...}) // /admin/docs
+	//	admin.EnableClient()                // /admin/client.ts, ...
+	//
+	// https://naufalraism.github.io/aemeath/guide/auth#api-docs-in-production
 	app.EnableDocs(aemeath.Info{Title: "{{.Title}}", Version: "0.1.0"})
 	app.EnableClient()
 
