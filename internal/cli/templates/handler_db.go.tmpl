@@ -11,6 +11,21 @@ import (
 	"{{.Module}}/models"
 )
 
+// List{{.Pascal}}In pages through the list: ?limit= (1 to 100, default 50)
+// and ?offset= (how many items to skip).
+type List{{.Pascal}}In struct {
+	Limit  int `query:"limit" validate:"gte=0,lte=100"`
+	Offset int `query:"offset" validate:"gte=0"`
+}
+
+// pageSize is the limit when the request gives none.
+func (in List{{.Pascal}}In) pageSize() int {
+	if in.Limit == 0 {
+		return 50
+	}
+	return in.Limit
+}
+
 // Create{{.Pascal}}In is the request body of POST {{.Prefix}}/{{.Route}}.
 type Create{{.Pascal}}In struct {
 	Name string `json:"name" validate:"required,min=1,max=100"`
@@ -42,9 +57,9 @@ func {{.Pascal}}Handler(app *aemeath.App) {
 	group := app.Group("{{.Prefix}}/{{.Route}}")
 
 	// GET {{.Prefix}}/{{.Route}}
-	aemeath.GET(group, "/", func(c *aemeath.Ctx, _ struct{}) ([]models.{{.Pascal}}, error) {
+	aemeath.GET(group, "/", func(c *aemeath.Ctx, in List{{.Pascal}}In) ([]models.{{.Pascal}}, error) {
 		items := []models.{{.Pascal}}{}
-		if err := db.From(c).Order("id").Find(&items).Error; err != nil {
+		if err := db.From(c).Order("id").Limit(in.pageSize()).Offset(in.Offset).Find(&items).Error; err != nil {
 			return nil, err
 		}
 		return items, nil

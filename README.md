@@ -63,7 +63,7 @@ The project's `go.mod` requires the framework release this CLI was tested with (
 
 | Command | Creates | Notes |
 | :--- | :--- | :--- |
-| `generate api Product` | `handlers/product.go`, `handlers/product_test.go` | Full CRUD (list, create, get, update, delete) on `/products`. Data is kept in memory, so it works immediately |
+| `generate api Product` | `handlers/product.go`, `handlers/product_test.go` | Full CRUD (a paged list with `?limit=` up to 100 and `?offset=`, create, get, update, delete) on `/products`. Data is kept in memory, so it works immediately |
 | `generate api Product --db` | the above backed by GORM, plus `models/product.go` | Registers the database plugin too. Each handler creates its own table at startup |
 | `generate api Product --prefix /api` | routes under `/api/products` | |
 | `generate job SendEmail` | `jobs/sendemail.go` | A job with `Run(ctx)`; registers the retrying job runner |

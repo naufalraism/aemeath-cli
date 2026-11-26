@@ -16,6 +16,8 @@
 
 - **`aemeath generate` checks the framework version of the project.** On a release older than the one above it writes nothing and prints `go get github.com/naufalraism/aemeath@v0.17.0`, because the code it writes uses the current API (`sqlite.Open` needs v0.12.0, for example) and would not compile. Projects that `replace` the framework with a local checkout, or do not require it yet, are not checked.
 
+- **The list route of `generate api` is paged:** `?limit=` (1 to 100, default 50) and `?offset=`; other values answer 422. It returned every row, so one request could read a whole table. The generated tests check the paging, also against a real PostgreSQL or MySQL database. The generated TypeScript hook takes the paging as optional input, so `useGetApiTasks()` keeps working.
+
 ## [0.6.0] - 2026-11-25
 
 Needs framework **v0.12.0** or later: `aemeath new` fetches the latest framework, so a project created now gets it; in an existing project run `go get github.com/naufalraism/aemeath@v0.12.0` and change `db.Open("app.db")` to `sqlite.Open("app.db")` (import `github.com/naufalraism/aemeath/db/sqlite`) before `aemeath generate`.

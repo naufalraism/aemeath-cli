@@ -105,18 +105,24 @@ func Test{{.Pascal}}CRUD(t *testing.T) {
 		t.Fatalf("update: status = %d, body = %s", rec.Code, rec.Body)
 	}
 
-	// List
-	rec = send{{.Pascal}}(h, "GET", "{{.Prefix}}/{{.Route}}", "")
-	var list []models.{{.Pascal}}
-	if err := json.Unmarshal(rec.Body.Bytes(), &list); err != nil {
-		t.Fatalf("list: unexpected body %s (err: %v)", rec.Body, err)
-	}
+	// List: the list is paged and a test database may hold many rows, so
+	// look through the pages.
 	found := false
-	for _, item := range list {
-		found = found || (item.ID == created.ID && item.Name == "renamed")
+	for offset := 0; !found; offset += 100 {
+		rec = send{{.Pascal}}(h, "GET", fmt.Sprintf("{{.Prefix}}/{{.Route}}?limit=100&offset=%d", offset), "")
+		var list []models.{{.Pascal}}
+		if err := json.Unmarshal(rec.Body.Bytes(), &list); err != nil {
+			t.Fatalf("list: unexpected body %s (err: %v)", rec.Body, err)
+		}
+		for _, item := range list {
+			found = found || (item.ID == created.ID && item.Name == "renamed")
+		}
+		if len(list) < 100 {
+			break
+		}
 	}
 	if !found {
-		t.Fatalf("list: the renamed item is missing from %s", rec.Body)
+		t.Fatalf("list: the renamed item %d is missing", created.ID)
 	}
 
 	// Delete
@@ -151,5 +157,44 @@ func Test{{.Pascal}}RejectsInvalidInput(t *testing.T) {
 	}
 	if rec := send{{.Pascal}}(h, "GET", "{{.Prefix}}/{{.Route}}/2147483647", ""); rec.Code != http.StatusNotFound {
 		t.Fatalf("unknown id: status = %d, want 404", rec.Code)
+	}
+}
+
+// The list is paged, so one request never returns the whole table. The
+// database may hold rows of other tests, so only the shape is checked.
+func Test{{.Pascal}}ListIsPaged(t *testing.T) {
+	h := new{{.Pascal}}App(t)
+	for _, name := range []string{"a", "b", "c"} {
+		rec := send{{.Pascal}}(h, "POST", "{{.Prefix}}/{{.Route}}", `{"name":"`+name+`"}`)
+		var created models.{{.Pascal}}
+		if err := json.Unmarshal(rec.Body.Bytes(), &created); rec.Code != http.StatusCreated || err != nil {
+			t.Fatalf("create %s: status = %d", name, rec.Code)
+		}
+		// Leave a shared test database as it was.
+		t.Cleanup(func() { send{{.Pascal}}(h, "DELETE", fmt.Sprintf("{{.Prefix}}/{{.Route}}/%d", created.ID), "") })
+	}
+	page := func(query string) []models.{{.Pascal}} {
+		t.Helper()
+		rec := send{{.Pascal}}(h, "GET", "{{.Prefix}}/{{.Route}}?"+query, "")
+		var list []models.{{.Pascal}}
+		if err := json.Unmarshal(rec.Body.Bytes(), &list); err != nil {
+			t.Fatalf("list ?%s: status = %d, body = %s", query, rec.Code, rec.Body)
+		}
+		return list
+	}
+	if got := page("limit=2"); len(got) != 2 {
+		t.Errorf("?limit=2 gave %d items, want 2", len(got))
+	}
+	first, second := page("limit=1&offset=0"), page("limit=1&offset=1")
+	if len(first) != 1 || len(second) != 1 || first[0].ID == second[0].ID {
+		t.Errorf("?offset=0 and ?offset=1 gave %v and %v, want two different items", first, second)
+	}
+	if got := page(""); len(got) > 50 {
+		t.Errorf("the default page has %d items, want at most 50", len(got))
+	}
+	for _, query := range []string{"limit=101", "offset=-1"} {
+		if rec := send{{.Pascal}}(h, "GET", "{{.Prefix}}/{{.Route}}?"+query, ""); rec.Code != http.StatusUnprocessableEntity {
+			t.Errorf("?%s: status = %d, want 422", query, rec.Code)
+		}
 	}
 }

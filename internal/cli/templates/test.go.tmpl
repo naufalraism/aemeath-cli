@@ -96,3 +96,33 @@ func Test{{.Pascal}}RejectsInvalidInput(t *testing.T) {
 		t.Fatalf("non-numeric id: status = %d, want 400", rec.Code)
 	}
 }
+
+// The list is paged, so one request never returns the whole store.
+func Test{{.Pascal}}ListIsPaged(t *testing.T) {
+	h := new{{.Pascal}}App()
+	for _, name := range []string{"a", "b", "c"} {
+		if rec := send{{.Pascal}}(h, "POST", "{{.Prefix}}/{{.Route}}", `{"name":"`+name+`"}`); rec.Code != http.StatusCreated {
+			t.Fatalf("create %s: status = %d", name, rec.Code)
+		}
+	}
+	page := func(query string) []handlers.{{.Pascal}} {
+		t.Helper()
+		rec := send{{.Pascal}}(h, "GET", "{{.Prefix}}/{{.Route}}?"+query, "")
+		var list []handlers.{{.Pascal}}
+		if err := json.Unmarshal(rec.Body.Bytes(), &list); err != nil {
+			t.Fatalf("list ?%s: status = %d, body = %s", query, rec.Code, rec.Body)
+		}
+		return list
+	}
+	if got := page("limit=2"); len(got) != 2 || got[0].Name != "a" {
+		t.Errorf("?limit=2 gave %v, want a and b", got)
+	}
+	if got := page("limit=2&offset=2"); len(got) != 1 || got[0].Name != "c" {
+		t.Errorf("?limit=2&offset=2 gave %v, want c", got)
+	}
+	for _, query := range []string{"limit=101", "offset=-1"} {
+		if rec := send{{.Pascal}}(h, "GET", "{{.Prefix}}/{{.Route}}?"+query, ""); rec.Code != http.StatusUnprocessableEntity {
+			t.Errorf("?%s: status = %d, want 422", query, rec.Code)
+		}
+	}
+}
