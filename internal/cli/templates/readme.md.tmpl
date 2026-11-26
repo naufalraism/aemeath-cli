@@ -50,6 +50,6 @@ The database is PostgreSQL. The server reads its connection string from `DATABAS
 {{- else if eq .Database "mysql"}}
 The database is MySQL (MariaDB works too). The server reads its connection string from `DATABASE_URL`: copy `.env.example` to `.env`, which `aemeath dev` reads, start a development database with `docker compose up db`, then run `aemeath dev`. Each generated resource creates its own table when the server starts. The generated handler tests use a temporary SQLite file, so they need no server.
 {{- else}}
-The database is SQLite (`app.db`, ignored by git). Each generated resource creates its own table when the server starts.
+The database is SQLite: the file `app.db` (ignored by git), or the path in `DATABASE_PATH`. In Docker it is `/app/data/app.db`, in a volume that outlives the container. Each generated resource creates its own table when the server starts.
 {{- end}}
 {{end}}

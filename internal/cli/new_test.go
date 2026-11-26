@@ -38,7 +38,7 @@ func TestNewTemplates(t *testing.T) {
 		"db": {
 			files:     []string{"main.go", "main_test.go", "handlers/task.go", "handlers/task_test.go", "models/task.go"},
 			absent:    []string{"web"},
-			mainHas:   []string{`sqlite.Open("app.db")`, "handlers.TaskHandler(app)", "HelloOut", `"/{$}"`},
+			mainHas:   []string{sqliteOpen, "handlers.TaskHandler(app)", "HelloOut", `"/{$}"`},
 			mainLacks: []string{"web/dist", `GET(app, "/",`},
 		},
 		"fullstack": {
@@ -47,7 +47,7 @@ func TestNewTemplates(t *testing.T) {
 				"web/package.json", "web/tsconfig.json", "web/vite.config.ts", "web/index.html",
 				"web/.gitignore", "web/src/main.tsx", "web/src/App.tsx", "web/src/index.css",
 			},
-			mainHas:   []string{`sqlite.Open("app.db")`, "handlers.TaskHandler(app)", `app.Static("/", "web/dist")`},
+			mainHas:   []string{sqliteOpen, "handlers.TaskHandler(app)", `app.Static("/", "web/dist")`},
 			mainLacks: []string{"HelloOut"},
 			absent:    []string{"main_test.go"},
 		},
@@ -184,7 +184,7 @@ func TestNewWithPostgresAndMySQL(t *testing.T) {
 					t.Errorf("main.go lacks %q:\n%s", want, main)
 				}
 			}
-			if strings.Contains(main, `sqlite.Open("app.db")`) {
+			if strings.Contains(main, sqliteOpen) {
 				t.Error("a second (SQLite) database plugin was registered")
 			}
 			if got := strings.Count(main, "RegisterPlugin("); got != 1 {
@@ -210,7 +210,7 @@ func TestNewWithPostgresAndMySQL(t *testing.T) {
 				t.Fatal(err)
 			}
 			main = readFile(t, filepath.Join(target, "main.go"))
-			if got := strings.Count(main, "RegisterPlugin("); got != 1 || strings.Contains(main, `sqlite.Open("app.db")`) {
+			if got := strings.Count(main, "RegisterPlugin("); got != 1 || strings.Contains(main, sqliteOpen) {
 				t.Errorf("generate api --db added another plugin:\n%s", main)
 			}
 			if !strings.Contains(out2.String(), "already registers the database plugin") {

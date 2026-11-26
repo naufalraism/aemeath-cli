@@ -8,6 +8,8 @@
 
 - **`.dockerignore` leaves out `node_modules` and `web/dist`.** The Dockerfile of a fullstack project runs `npm install` in Linux and then copies `web/` over the result, so the `node_modules` installed on your machine (with Windows or macOS builds of esbuild and rollup) replaced the Linux ones and `npm run build` inside Docker could fail. Run `aemeath generate docker --force` in an existing project to get the new file (it also rewrites `Dockerfile` and `docker-compose.yml`).
 
+- **SQLite data survives `docker compose up --build`.** The SQLite file was written inside the container, which compose replaces on every rebuild, so the data was lost. The generated `main.go` now opens `sqlite.Open(cmp.Or(os.Getenv("DATABASE_PATH"), "app.db"))`, and `aemeath generate docker` sets `DATABASE_PATH=/app/data/app.db` with a volume on `/app/data`, which the image lets the app user write. Outside Docker nothing changes: without `DATABASE_PATH` the file is still `app.db`. A project without a database gets no volume. In an existing SQLite project, change the `sqlite.Open("app.db")` line the same way, then run `aemeath generate docker --force`.
+
 ## [0.6.0] - 2026-11-25
 
 Needs framework **v0.12.0** or later: `aemeath new` fetches the latest framework, so a project created now gets it; in an existing project run `go get github.com/naufalraism/aemeath@v0.12.0` and change `db.Open("app.db")` to `sqlite.Open("app.db")` (import `github.com/naufalraism/aemeath/db/sqlite`) before `aemeath generate`.

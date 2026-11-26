@@ -152,7 +152,7 @@ func printManualHandlerWiring(out io.Writer, module string, n Names, db bool) {
 	outf(out, "     import %q\n", module+"/handlers")
 	if db {
 		outln(out, "     // and the database plugin, before the handlers:")
-		outln(out, `     //   database, err := sqlite.Open("app.db") ... app.RegisterPlugin(database)`)
+		outln(out, `     //   database, err := sqlite.Open(cmp.Or(os.Getenv("DATABASE_PATH"), "app.db")) ... app.RegisterPlugin(database)`)
 	}
 	outf(out, "     handlers.%sHandler(app)\n", n.Pascal)
 }
@@ -303,7 +303,7 @@ left alone and the lines to add are printed. Use --no-wire to skip the edit.`,
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
-			data := projectData{GoVersion: goVersion(), Web: fileExists(filepath.Join("web", "package.json")), Database: detectDatabase(".")}
+			data := projectData{GoVersion: goVersion(), Web: fileExists(filepath.Join("web", "package.json")), Database: projectDatabase(".")}
 			for _, f := range []struct{ tmpl, dest string }{
 				{"Dockerfile.tmpl", "Dockerfile"},
 				{"docker-compose.yml.tmpl", "docker-compose.yml"},
@@ -386,7 +386,7 @@ func dbImportPath(kind string) string {
 }
 
 func dbManualLine(kind string) string {
-	open := `sqlite.Open("app.db")`
+	open := sqliteOpen
 	switch kind {
 	case dbPostgres:
 		open = `postgres.Open(os.Getenv("DATABASE_URL"))`
