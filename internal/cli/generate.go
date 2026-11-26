@@ -79,6 +79,9 @@ func generateResource(out io.Writer, o resourceOpts) error {
 	if module == "" {
 		return fmt.Errorf("go.mod not found: run this command from the root of your project")
 	}
+	if err := checkFramework(o.Root); err != nil {
+		return err
+	}
 	prefix, err := normalizePrefix(o.Prefix)
 	if err != nil {
 		return err
@@ -189,6 +192,9 @@ type simpleGen struct {
 func generateJob(out io.Writer, root, rawName string, force, noWire bool) error {
 	names, err := parseName(rawName)
 	if err != nil {
+		return err
+	}
+	if err := checkFramework(root); err != nil {
 		return err
 	}
 	module := modulePath(root)
@@ -330,6 +336,9 @@ func generateTestOnly(out io.Writer, root, rawName, rawPrefix string, db, force 
 	if module == "" {
 		return fmt.Errorf("go.mod not found: run this command from the root of your project")
 	}
+	if err := checkFramework(root); err != nil {
+		return err
+	}
 	prefix, err := normalizePrefix(rawPrefix)
 	if err != nil {
 		return err
@@ -350,6 +359,9 @@ func generateTestOnly(out io.Writer, root, rawName, rawPrefix string, db, force 
 func generateSimple(out io.Writer, root string, s simpleGen, rawName string, force bool) error {
 	names, err := parseName(rawName)
 	if err != nil {
+		return err
+	}
+	if err := checkFramework(root); err != nil {
 		return err
 	}
 	module := modulePath(root)

@@ -53,7 +53,11 @@ cd my-app/web && npm install && npm run dev       # http://localhost:5173, proxi
 
 `npm run build` fills `web/dist`, which the Go server serves at `/`.
 
+The project's `go.mod` requires the framework release this CLI was tested with (`aemeath --version` belongs to one; the [changelog](CHANGELOG.md) names it), not whatever is newest. Upgrade later with `go get github.com/naufalraism/aemeath@latest`.
+
 ### `aemeath generate <kind> <Name>`
+
+`generate` checks the framework version in `go.mod` first: on a release older than the one this CLI was tested with, it writes nothing and prints the `go get` command to run, because the code it generates may not compile there. A project that replaces the framework with a local checkout is not checked.
 
 `<Name>` may be written as `Product`, `product-item`, `product_item` or `ProductItem`.
 

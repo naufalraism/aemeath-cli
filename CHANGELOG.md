@@ -12,6 +12,10 @@
 
 - **New projects no longer call `aemeath.CORS()`**, which allows every origin. No generated project needs CORS (the React app reaches the API through Vite's proxy, on the same origin), and on an internal network `*` lets any web page an employee opens read the API's answers. `main.go` shows, in a comment, how to allow one origin: `aemeath.CORS(aemeath.CORSConfig{AllowOrigins: []string{"https://app.example.com"}})`; the project build test compiles that line. Existing projects are not changed.
 
+- **`aemeath new` writes the framework version into `go.mod`** (`require github.com/naufalraism/aemeath v0.17.0` for this release), the one the templates are tested with. Before, `go mod tidy` took whatever framework was newest, so a later breaking framework release could break projects this CLI creates.
+
+- **`aemeath generate` checks the framework version of the project.** On a release older than the one above it writes nothing and prints `go get github.com/naufalraism/aemeath@v0.17.0`, because the code it writes uses the current API (`sqlite.Open` needs v0.12.0, for example) and would not compile. Projects that `replace` the framework with a local checkout, or do not require it yet, are not checked.
+
 ## [0.6.0] - 2026-11-25
 
 Needs framework **v0.12.0** or later: `aemeath new` fetches the latest framework, so a project created now gets it; in an existing project run `go get github.com/naufalraism/aemeath@v0.12.0` and change `db.Open("app.db")` to `sqlite.Open("app.db")` (import `github.com/naufalraism/aemeath/db/sqlite`) before `aemeath generate`.

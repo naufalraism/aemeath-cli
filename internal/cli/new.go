@@ -22,6 +22,7 @@ type projectData struct {
 	NPMName   string
 	GoVersion string
 	Replace   string
+	Framework string // the framework release written into go.mod
 	Web       bool
 	DB        bool
 	Database  string // "sqlite", "postgres" or "mysql" (only meaningful when DB is set)
@@ -137,7 +138,7 @@ func runNew(cmd *cobra.Command, target, module, replace, template, database stri
 		return fmt.Errorf("%s already exists", target)
 	}
 
-	data := projectData{Module: module, Title: base, NPMName: npmName(base), GoVersion: goVersion(), Web: tpl.Web, DB: tpl.DB, Database: database}
+	data := projectData{Module: module, Title: base, NPMName: npmName(base), GoVersion: goVersion(), Framework: frameworkVersion, Web: tpl.Web, DB: tpl.DB, Database: database}
 	if replace != "" {
 		abs, err := filepath.Abs(replace)
 		if err != nil {
