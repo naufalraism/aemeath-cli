@@ -6,3 +6,7 @@ uploads/
 client.ts
 Dockerfile
 docker-compose.yml
+# The Dockerfile installs and builds web/ itself, for Linux: the copies on
+# this machine (Windows or macOS binaries) must not replace them.
+**/node_modules
+web/dist

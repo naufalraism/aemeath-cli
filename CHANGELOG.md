@@ -6,6 +6,8 @@
 
 - **`aemeath dev` and `aemeath ts` read `.env`.** A generated project ships `.env.example` saying "copy to .env", and `aemeath dev` restarted on every change to `.env`, but nothing read the file: the server never saw `PORT` or `DATABASE_URL` from it. They are now passed to the server; a variable already set in the shell wins, and a line that is not `KEY=value` stops the restart with its line number. The generated README no longer tells PostgreSQL and MySQL users to run `DATABASE_URL=... aemeath dev`, which does not work in PowerShell, and shows the PowerShell way to set `TEST_DATABASE_URL`.
 
+- **`.dockerignore` leaves out `node_modules` and `web/dist`.** The Dockerfile of a fullstack project runs `npm install` in Linux and then copies `web/` over the result, so the `node_modules` installed on your machine (with Windows or macOS builds of esbuild and rollup) replaced the Linux ones and `npm run build` inside Docker could fail. Run `aemeath generate docker --force` in an existing project to get the new file (it also rewrites `Dockerfile` and `docker-compose.yml`).
+
 ## [0.6.0] - 2026-11-25
 
 Needs framework **v0.12.0** or later: `aemeath new` fetches the latest framework, so a project created now gets it; in an existing project run `go get github.com/naufalraism/aemeath@v0.12.0` and change `db.Open("app.db")` to `sqlite.Open("app.db")` (import `github.com/naufalraism/aemeath/db/sqlite`) before `aemeath generate`.
