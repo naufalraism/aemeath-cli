@@ -18,6 +18,8 @@
 
 - **The list route of `generate api` is paged:** `?limit=` (1 to 100, default 50) and `?offset=`; other values answer 422. It returned every row, so one request could read a whole table. The generated tests check the paging, also against a real PostgreSQL or MySQL database. The generated TypeScript hook takes the paging as optional input, so `useGetApiTasks()` keeps working.
 
+- **`aemeath ts` and `aemeath dev --ts-out` no longer report old files as new.** The program now writes into an empty folder of its own, and only files whose content changed are copied to the output folder. Before, a program that wrote nothing (because `main` returned before `app.Listen`, for example) passed whenever the files of an earlier run were still there.
+
 ## [0.6.0] - 2026-11-25
 
 Needs framework **v0.12.0** or later: `aemeath new` fetches the latest framework, so a project created now gets it; in an existing project run `go get github.com/naufalraism/aemeath@v0.12.0` and change `db.Open("app.db")` to `sqlite.Open("app.db")` (import `github.com/naufalraism/aemeath/db/sqlite`) before `aemeath generate`.
