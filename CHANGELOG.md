@@ -24,6 +24,8 @@
 
 - Corrected in the README: on Windows, `aemeath dev` has stopped the server with Ctrl+Break since v0.4.4, so its shutdown code runs; the README still said the process was killed at once.
 
+- **`golang.org/x/sys` v0.50.0** (was v0.13.0, from 2023), used through fsnotify. `govulncheck` reported [GO-2026-5024](https://pkg.go.dev/vuln/GO-2026-5024) (Windows) in a package the CLI imports, in code it does not call. The `go.mod` and `go.sum` changes come from `go get` and `go mod tidy` on Go 1.27.4, where the tests pass and `govulncheck` finds nothing.
+
 ## [0.6.0] - 2026-11-25
 
 Needs framework **v0.12.0** or later: `aemeath new` fetches the latest framework, so a project created now gets it; in an existing project run `go get github.com/naufalraism/aemeath@v0.12.0` and change `db.Open("app.db")` to `sqlite.Open("app.db")` (import `github.com/naufalraism/aemeath/db/sqlite`) before `aemeath generate`.
