@@ -20,6 +20,8 @@
 
 - **`aemeath ts` and `aemeath dev --ts-out` no longer report old files as new.** The program now writes into an empty folder of its own, and only files whose content changed are copied to the output folder. Before, a program that wrote nothing (because `main` returned before `app.Listen`, for example) passed whenever the files of an earlier run were still there.
 
+- **The comments of a generated job** no longer mention Aemeath v0.3, and the scheduling example checks `Lookup's` result and `Every's` error instead of dropping them.
+
 ## [0.6.0] - 2026-11-25
 
 Needs framework **v0.12.0** or later: `aemeath new` fetches the latest framework, so a project created now gets it; in an existing project run `go get github.com/naufalraism/aemeath@v0.12.0` and change `db.Open("app.db")` to `sqlite.Open("app.db")` (import `github.com/naufalraism/aemeath/db/sqlite`) before `aemeath generate`.
