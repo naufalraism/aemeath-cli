@@ -142,7 +142,7 @@ func TestDockerfileForAPIAndFullstack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"FROM golang:1.27-alpine AS builder", "USER app", "chown app:app /app", "ENTRYPOINT"} {
+	for _, want := range []string{"FROM golang:1.27-alpine AS builder", "USER app", "chown -R app:app /app", "ENTRYPOINT"} {
 		if !strings.Contains(string(plain), want) || !strings.Contains(string(full), want) {
 			t.Errorf("both Dockerfiles must contain %q", want)
 		}

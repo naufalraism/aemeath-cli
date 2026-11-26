@@ -28,15 +28,21 @@ func main() {
 	// platforms), every request seems to come from the proxy. Put this first so
 	// that logs and rate limits see the visitor's address instead:
 	//
-	//	app.Use(aemeath.RealIP(aemeath.PrivateNetworks...))
+	//	app.Use(aemeath.RealIP(aemeath.PrivateNetworks()...))
 	app.Use(
 		aemeath.SecurityHeaders(),
 		aemeath.RequestID(),
 		aemeath.Logger(),
 		aemeath.Recover(),
-		aemeath.CORS(),
 		aemeath.Gzip(),
 	)
+
+	// CORS is off: browsers only let pages from this server's origin read its
+	// answers.{{if .Web}} The React app needs nothing more (in development, Vite
+	// forwards its API calls to this server).{{end}} If a frontend on another
+	// origin calls this API, allow that origin only:
+	//
+	//	app.Use(aemeath.CORS(aemeath.CORSConfig{AllowOrigins: []string{"https://app.example.com"}}))
 
 	// GET /healthz (liveness) and GET /readyz (readiness) for load balancers.
 	app.EnableHealth()

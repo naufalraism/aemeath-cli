@@ -50,20 +50,35 @@ func detectDatabase(root string) string {
 	return dbSQLite
 }
 
+// sqliteOpen opens the SQLite file named by DATABASE_PATH, app.db when it is
+// not set. docker-compose.yml points it into a volume, so the data outlives
+// the container.
+const sqliteOpen = `sqlite.Open(cmp.Or(os.Getenv("DATABASE_PATH"), "app.db"))`
+
+// projectDatabase is the database main.go registers, or "" when it
+// registers none (an API without a database).
+func projectDatabase(root string) string {
+	src, err := os.ReadFile(filepath.Join(root, "main.go"))
+	if err != nil || !dbPluginWire(dbSQLite).Already.Match(src) {
+		return ""
+	}
+	return detectDatabase(root)
+}
+
 // dbPluginWire registers the database plugin in main(). Each generated
 // handler migrates its own model, so the plugin is opened without models.
 // PostgreSQL and MySQL read their connection string from DATABASE_URL.
 func dbPluginWire(kind string) wireSpec {
-	open, imp := `sqlite.Open("app.db")`, aemeathModule+"/db/sqlite"
+	open, imp := sqliteOpen, aemeathModule+"/db/sqlite"
 	switch kind {
 	case dbPostgres:
 		open, imp = `postgres.Open(os.Getenv("DATABASE_URL"))`, aemeathModule+"/db/postgres"
 	case dbMySQL:
 		open, imp = `mysql.Open(os.Getenv("DATABASE_URL"))`, aemeathModule+"/db/mysql"
 	}
-	imports := []importSpec{{Path: imp}, {Path: "log"}}
-	if kind != dbSQLite {
-		imports = append(imports, importSpec{Path: "os"})
+	imports := []importSpec{{Path: imp}, {Path: "log"}, {Path: "os"}}
+	if kind == dbSQLite {
+		imports = append(imports, importSpec{Path: "cmp"})
 	}
 	return wireSpec{
 		Imports: imports,

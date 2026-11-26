@@ -1,6 +1,8 @@
 module {{.Module}}
 
 go {{.GoVersion}}
+
+require github.com/naufalraism/aemeath {{.Framework}}
 {{if .Replace}}
 replace github.com/naufalraism/aemeath => {{printf "%q" .Replace}}
 {{end}}

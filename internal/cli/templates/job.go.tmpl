@@ -30,7 +30,7 @@ func (j *{{.Pascal}}Job) Run(ctx context.Context) error {
 }
 
 // Timeout is the time limit of one attempt. Without a limit, a job that hangs
-// keeps its worker forever. (Aemeath v0.3 and older ignore this method.)
+// keeps its worker forever.
 func (j *{{.Pascal}}Job) Timeout() time.Duration { return 5 * time.Minute }
 
 // Enqueue it from a handler (the runner is registered in main.go):
@@ -43,8 +43,13 @@ func (j *{{.Pascal}}Job) Timeout() time.Duration { return 5 * time.Minute }
 //
 // or run it on a schedule at startup:
 //
-//	runner, _ := aemeath.Lookup[*aejobs.Runner](app)
-//	runner.Every(time.Hour, &jobs.{{.Pascal}}Job{})
+//	runner, ok := aemeath.Lookup[*aejobs.Runner](app)
+//	if !ok {
+//		log.Fatal("register the job runner before this")
+//	}
+//	if err := runner.Every(time.Hour, &jobs.{{.Pascal}}Job{}); err != nil {
+//		log.Fatal(err)
+//	}
 //
 // The queue lives in memory: jobs that are queued when the process crashes are
 // lost. For work that must never be lost, use a durable queue.

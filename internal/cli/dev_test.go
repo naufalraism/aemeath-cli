@@ -187,7 +187,7 @@ func TestDevStopLetsTheServerShutDown(t *testing.T) {
 	if err := r.build(context.Background()); err != nil {
 		t.Fatalf("build: %v\n%s", err, out.String())
 	}
-	if err := r.start(); err != nil {
+	if err := r.start(os.Environ()); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, "the server to start", func() bool { _, err := os.Stat(filepath.Join(dir, "ready")); return err == nil })

@@ -27,8 +27,9 @@ WORKDIR /app
 COPY --from=builder /out/app .
 {{if .Web}}COPY --from=web /web/dist ./web/dist
 {{end}}
-# Do not run as root, but let that user write here (a SQLite file such as app.db).
-RUN chown app:app /app
+# Do not run as root, but let that user write here and in data/, where
+# docker-compose.yml mounts the volume that keeps a SQLite file.
+RUN mkdir -p /app/data && chown -R app:app /app
 USER app
 
 # Adjust if your app listens on a different port (the PORT variable).

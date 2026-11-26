@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+## [0.7.0] - 2026-11-26
+
+Needs framework **v0.17.0** or later: `aemeath new` now writes it into `go.mod`; in an existing project run `go get github.com/naufalraism/aemeath@v0.17.0` before `aemeath generate`, which now checks it.
+
+- **The `RealIP` example in the generated `main.go` calls `aemeath.PrivateNetworks()`**, a function since framework v0.16.0; uncommenting the old `PrivateNetworks...` gave code that did not compile. The project build test now compiles every `app.*` example that `main.go` shows in a comment.
+
+- **`aemeath dev` and `aemeath ts` read `.env`.** A generated project ships `.env.example` saying "copy to .env", and `aemeath dev` restarted on every change to `.env`, but nothing read the file: the server never saw `PORT` or `DATABASE_URL` from it. They are now passed to the server; a variable already set in the shell wins, and a line that is not `KEY=value` stops the restart with its line number. The generated README no longer tells PostgreSQL and MySQL users to run `DATABASE_URL=... aemeath dev`, which does not work in PowerShell, and shows the PowerShell way to set `TEST_DATABASE_URL`.
+
+- **`.dockerignore` leaves out `node_modules` and `web/dist`.** The Dockerfile of a fullstack project runs `npm install` in Linux and then copies `web/` over the result, so the `node_modules` installed on your machine (with Windows or macOS builds of esbuild and rollup) replaced the Linux ones and `npm run build` inside Docker could fail. Run `aemeath generate docker --force` in an existing project to get the new file (it also rewrites `Dockerfile` and `docker-compose.yml`).
+
+- **SQLite data survives `docker compose up --build`.** The SQLite file was written inside the container, which compose replaces on every rebuild, so the data was lost. The generated `main.go` now opens `sqlite.Open(cmp.Or(os.Getenv("DATABASE_PATH"), "app.db"))`, and `aemeath generate docker` sets `DATABASE_PATH=/app/data/app.db` with a volume on `/app/data`, which the image lets the app user write. Outside Docker nothing changes: without `DATABASE_PATH` the file is still `app.db`. A project without a database gets no volume. In an existing SQLite project, change the `sqlite.Open("app.db")` line the same way, then run `aemeath generate docker --force`.
+
+- **New projects no longer call `aemeath.CORS()`**, which allows every origin. No generated project needs CORS (the React app reaches the API through Vite's proxy, on the same origin), and on an internal network `*` lets any web page an employee opens read the API's answers. `main.go` shows, in a comment, how to allow one origin: `aemeath.CORS(aemeath.CORSConfig{AllowOrigins: []string{"https://app.example.com"}})`; the project build test compiles that line. Existing projects are not changed.
+
+- **`aemeath new` writes the framework version into `go.mod`** (`require github.com/naufalraism/aemeath v0.17.0` for this release), the one the templates are tested with. Before, `go mod tidy` took whatever framework was newest, so a later breaking framework release could break projects this CLI creates.
+
+- **`aemeath generate` checks the framework version of the project.** On a release older than the one above it writes nothing and prints `go get github.com/naufalraism/aemeath@v0.17.0`, because the code it writes uses the current API (`sqlite.Open` needs v0.12.0, for example) and would not compile. Projects that `replace` the framework with a local checkout, or do not require it yet, are not checked.
+
+- **The list route of `generate api` is paged:** `?limit=` (1 to 100, default 50) and `?offset=`; other values answer 422. It returned every row, so one request could read a whole table. The generated tests check the paging, also against a real PostgreSQL or MySQL database. The generated TypeScript hook takes the paging as optional input, so `useGetApiTasks()` keeps working.
+
+- **`aemeath ts` and `aemeath dev --ts-out` no longer report old files as new.** The program now writes into an empty folder of its own, and only files whose content changed are copied to the output folder. Before, a program that wrote nothing (because `main` returned before `app.Listen`, for example) passed whenever the files of an earlier run were still there.
+
+- **The comments of a generated job** no longer mention Aemeath v0.3, and the scheduling example checks `Lookup's` result and `Every's` error instead of dropping them.
+
+- Corrected in the README: on Windows, `aemeath dev` has stopped the server with Ctrl+Break since v0.4.4, so its shutdown code runs; the README still said the process was killed at once.
+
+- **`golang.org/x/sys` v0.50.0** (was v0.13.0, from 2023), used through fsnotify. `govulncheck` reported [GO-2026-5024](https://pkg.go.dev/vuln/GO-2026-5024) (Windows) in a package the CLI imports, in code it does not call. The `go.mod` and `go.sum` changes come from `go get` and `go mod tidy` on Go 1.27.4, where the tests pass and `govulncheck` finds nothing.
+
+- **The CLI is built and released with Go 1.27.4**, the version in the new `toolchain` line of `go.mod`, through `actions/setup-go@v6`, which reads that line. The release binaries were built with Go 1.27.0, whose standard library has known vulnerabilities. CI also runs `govulncheck` now, so a new Go security release shows up as a red build.
+
 ## [0.6.0] - 2026-11-25
 
 Needs framework **v0.12.0** or later: `aemeath new` fetches the latest framework, so a project created now gets it; in an existing project run `go get github.com/naufalraism/aemeath@v0.12.0` and change `db.Open("app.db")` to `sqlite.Open("app.db")` (import `github.com/naufalraism/aemeath/db/sqlite`) before `aemeath generate`.

@@ -130,7 +130,7 @@ func TestWireDatabasePluginThenHandlersKeepsTheOrder(t *testing.T) {
 	}
 	got := readMain(t, dir)
 	mustParse(t, got)
-	for _, want := range []string{`sqlite.Open("app.db")`, "aejobs.New(aejobs.WithWorkers(4))", `aejobs "github.com/naufalraism/aemeath/jobs"`, `"github.com/naufalraism/aemeath/db/sqlite"`} {
+	for _, want := range []string{sqliteOpen, "aejobs.New(aejobs.WithWorkers(4))", `aejobs "github.com/naufalraism/aemeath/jobs"`, `"github.com/naufalraism/aemeath/db/sqlite"`} {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing %q:\n%s", want, got)
 		}

@@ -53,13 +53,17 @@ cd my-app/web && npm install && npm run dev       # http://localhost:5173, proxi
 
 `npm run build` fills `web/dist`, which the Go server serves at `/`.
 
+The project's `go.mod` requires the framework release this CLI was tested with (`aemeath --version` belongs to one; the [changelog](CHANGELOG.md) names it), not whatever is newest. Upgrade later with `go get github.com/naufalraism/aemeath@latest`.
+
 ### `aemeath generate <kind> <Name>`
+
+`generate` checks the framework version in `go.mod` first: on a release older than the one this CLI was tested with, it writes nothing and prints the `go get` command to run, because the code it generates may not compile there. A project that replaces the framework with a local checkout is not checked.
 
 `<Name>` may be written as `Product`, `product-item`, `product_item` or `ProductItem`.
 
 | Command | Creates | Notes |
 | :--- | :--- | :--- |
-| `generate api Product` | `handlers/product.go`, `handlers/product_test.go` | Full CRUD (list, create, get, update, delete) on `/products`. Data is kept in memory, so it works immediately |
+| `generate api Product` | `handlers/product.go`, `handlers/product_test.go` | Full CRUD (a paged list with `?limit=` up to 100 and `?offset=`, create, get, update, delete) on `/products`. Data is kept in memory, so it works immediately |
 | `generate api Product --db` | the above backed by GORM, plus `models/product.go` | Registers the database plugin too. Each handler creates its own table at startup |
 | `generate api Product --prefix /api` | routes under `/api/products` | |
 | `generate job SendEmail` | `jobs/sendemail.go` | A job with `Run(ctx)`; registers the retrying job runner |
@@ -90,8 +94,9 @@ aemeath dev --pkg ./cmd/server --delay 500ms
 aemeath dev --ts-out web/src/api    # also rewrite the TypeScript files after every successful build
 ```
 
-- It runs the compiled binary directly. On macOS and Linux it stops the server with `SIGTERM` and kills it if it is still there after 5 s, so the server can shut down gracefully; Windows has no `SIGTERM` for processes, so there the process is killed at once. Either way the port is free again.
+- It runs the compiled binary directly and, on reload and on exit, asks the server to shut down gracefully, so its `OnShutdown` hooks run: with `SIGTERM` on macOS and Linux, and with Ctrl+Break on Windows (the server runs in a process group of its own; Go programs see it as `os.Interrupt`). A server still running after 5 s is killed. Either way the port is free again.
 - If a build fails, the previous version keeps running until you fix the error.
+- It reads `.env` in the project folder (copy `.env.example`) and gives those variables to the server; a variable already set in your shell wins. Editing `.env` restarts the server. `aemeath ts` reads it too. Nothing else does: in production, set the variables on your platform.
 - Changes are debounced, new directories are watched, and `_test.go` files, hidden folders, `vendor`, `node_modules`, `tmp` and `uploads` are ignored.
 
 ### Help and tab completion

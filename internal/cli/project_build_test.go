@@ -125,6 +125,7 @@ func TestGeneratedProjectsBuild(t *testing.T) {
 					}
 				}
 			}
+			writeCommentedExamples(t, root)
 			check("new project")
 
 			withDB := projectTemplates[tc.template].DB
@@ -186,5 +187,35 @@ func TestGeneratedProjectsBuild(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// writeCommentedExamples copies the app.* calls that main.go shows in its
+// comments (RealIP, SetShutdownDelay, ...) into a function of their own, so
+// the build proves that uncommenting them gives code that compiles.
+func writeCommentedExamples(t *testing.T, root string) {
+	t.Helper()
+	src, err := os.ReadFile(filepath.Join(root, "main.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body bytes.Buffer
+	n := 0
+	for _, line := range bytes.Split(src, []byte("\n")) {
+		code, ok := bytes.CutPrefix(bytes.TrimSpace(line), []byte("//\tapp."))
+		if !ok || bytes.Contains(code, []byte("{...}")) {
+			continue
+		}
+		body.WriteString("\tapp.")
+		body.Write(code)
+		body.WriteString("\n")
+		n++
+	}
+	if n < 2 {
+		t.Fatalf("main.go shows %d commented app.* examples; the template changed, update this check", n)
+	}
+	file := "package main\n\nimport (\n\t\"time\"\n\n\t\"github.com/naufalraism/aemeath\"\n)\n\nvar _ = time.Second\n\nfunc commentedExamples(app *aemeath.App) {\n" + body.String() + "}\n"
+	if err := os.WriteFile(filepath.Join(root, "commented_examples.go"), []byte(file), 0o600); err != nil {
+		t.Fatal(err)
 	}
 }

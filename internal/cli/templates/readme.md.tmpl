@@ -12,7 +12,13 @@ go test ./...      # run the tests
 The handler tests use a temporary SQLite database. To run them against {{if eq .Database "postgres"}}PostgreSQL{{else}}MySQL{{end}} as well, point `TEST_DATABASE_URL` at a database kept for tests (they add rows to it):
 
 ```bash
+# macOS, Linux
 TEST_DATABASE_URL='{{if eq .Database "postgres"}}postgres://app:app@localhost:5432/app_test?sslmode=disable{{else}}app:app@tcp(localhost:3306)/app_test{{end}}' go test ./...
+```
+
+```powershell
+# Windows PowerShell
+$env:TEST_DATABASE_URL = '{{if eq .Database "postgres"}}postgres://app:app@localhost:5432/app_test?sslmode=disable{{else}}app:app@tcp(localhost:3306)/app_test{{end}}'; go test ./...
 ```
 {{end}}{{if .Web}}
 The React app lives in `web/`. In a second terminal:
@@ -40,10 +46,10 @@ aemeath ts --out web/src/api                        # TypeScript client, Zod sch
 ```
 {{if .DB}}
 {{- if eq .Database "postgres"}}
-The database is PostgreSQL. The server reads its connection string from `DATABASE_URL` (see `.env.example`). Start a development server with `docker compose up db` (it creates the `app` database), then run `DATABASE_URL=... aemeath dev`. Each generated resource creates its own table when the server starts. The generated handler tests use a temporary SQLite file, so they need no server.
+The database is PostgreSQL. The server reads its connection string from `DATABASE_URL`: copy `.env.example` to `.env`, which `aemeath dev` reads, start a development database with `docker compose up db` (it creates the `app` database), then run `aemeath dev`. Each generated resource creates its own table when the server starts. The generated handler tests use a temporary SQLite file, so they need no server.
 {{- else if eq .Database "mysql"}}
-The database is MySQL (MariaDB works too). The server reads its connection string from `DATABASE_URL` (see `.env.example`). Start a development server with `docker compose up db`, then run `DATABASE_URL=... aemeath dev`. Each generated resource creates its own table when the server starts. The generated handler tests use a temporary SQLite file, so they need no server.
+The database is MySQL (MariaDB works too). The server reads its connection string from `DATABASE_URL`: copy `.env.example` to `.env`, which `aemeath dev` reads, start a development database with `docker compose up db`, then run `aemeath dev`. Each generated resource creates its own table when the server starts. The generated handler tests use a temporary SQLite file, so they need no server.
 {{- else}}
-The database is SQLite (`app.db`, ignored by git). Each generated resource creates its own table when the server starts.
+The database is SQLite: the file `app.db` (ignored by git), or the path in `DATABASE_PATH`. In Docker it is `/app/data/app.db`, in a volume that outlives the container. Each generated resource creates its own table when the server starts.
 {{- end}}
 {{end}}
