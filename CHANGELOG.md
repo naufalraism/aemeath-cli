@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **The `RealIP` example in the generated `main.go` calls `aemeath.PrivateNetworks()`**, a function since framework v0.16.0; uncommenting the old `PrivateNetworks...` gave code that did not compile. The project build test now compiles every `app.*` example that `main.go` shows in a comment.
+
 ## [0.6.0] - 2026-11-25
 
 Needs framework **v0.12.0** or later: `aemeath new` fetches the latest framework, so a project created now gets it; in an existing project run `go get github.com/naufalraism/aemeath@v0.12.0` and change `db.Open("app.db")` to `sqlite.Open("app.db")` (import `github.com/naufalraism/aemeath/db/sqlite`) before `aemeath generate`.

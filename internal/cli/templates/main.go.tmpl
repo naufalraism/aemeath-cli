@@ -28,7 +28,7 @@ func main() {
 	// platforms), every request seems to come from the proxy. Put this first so
 	// that logs and rate limits see the visitor's address instead:
 	//
-	//	app.Use(aemeath.RealIP(aemeath.PrivateNetworks...))
+	//	app.Use(aemeath.RealIP(aemeath.PrivateNetworks()...))
 	app.Use(
 		aemeath.SecurityHeaders(),
 		aemeath.RequestID(),
