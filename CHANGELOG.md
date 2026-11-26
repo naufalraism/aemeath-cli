@@ -26,6 +26,8 @@
 
 - **`golang.org/x/sys` v0.50.0** (was v0.13.0, from 2023), used through fsnotify. `govulncheck` reported [GO-2026-5024](https://pkg.go.dev/vuln/GO-2026-5024) (Windows) in a package the CLI imports, in code it does not call. The `go.mod` and `go.sum` changes come from `go get` and `go mod tidy` on Go 1.27.4, where the tests pass and `govulncheck` finds nothing.
 
+- **The CLI is built and released with Go 1.27.4**, the version in the new `toolchain` line of `go.mod`, through `actions/setup-go@v6`, which reads that line. The release binaries were built with Go 1.27.0, whose standard library has known vulnerabilities. CI also runs `govulncheck` now, so a new Go security release shows up as a red build.
+
 ## [0.6.0] - 2026-11-25
 
 Needs framework **v0.12.0** or later: `aemeath new` fetches the latest framework, so a project created now gets it; in an existing project run `go get github.com/naufalraism/aemeath@v0.12.0` and change `db.Open("app.db")` to `sqlite.Open("app.db")` (import `github.com/naufalraism/aemeath/db/sqlite`) before `aemeath generate`.
