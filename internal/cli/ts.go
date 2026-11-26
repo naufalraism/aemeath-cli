@@ -32,9 +32,13 @@ func generateTypeScript(ctx context.Context, bin, dir, outDir string) (note stri
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
+	env, _, err := serverEnv(dir)
+	if err != nil {
+		return "", err
+	}
 	cmd := exec.CommandContext(ctx, bin)
 	cmd.Dir = dir
-	cmd.Env = append(os.Environ(), envTypeScriptOut+"="+abs)
+	cmd.Env = append(env, envTypeScriptOut+"="+abs)
 	var out bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &out
 	runErr := cmd.Run()

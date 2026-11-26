@@ -44,12 +44,12 @@ func (r *runner) build(ctx context.Context) error {
 	return cmd.Run()
 }
 
-func (r *runner) start() error {
+func (r *runner) start(env []string) error {
 	cmd := exec.Command(r.bin)
 	cmd.Dir = r.dir
 	cmd.Stdout = r.stdout
 	cmd.Stderr = r.stderr
-	cmd.Env = os.Environ()
+	cmd.Env = env
 	prepareServer(cmd)
 	if err := cmd.Start(); err != nil {
 		return err
@@ -190,8 +190,16 @@ func runDev(ctx context.Context, opts devOptions) error {
 				}
 			}
 		}
+		env, fromFile, err := serverEnv(r.dir)
+		if err != nil {
+			say("❌ %v. Fix .env and save again.", err)
+			return
+		}
 		r.stop(5 * time.Second)
-		if err := r.start(); err != nil {
+		if fromFile > 0 {
+			say("📄 %d variable(s) from .env", fromFile)
+		}
+		if err := r.start(env); err != nil {
 			say("❌ Could not start the server: %v", err)
 			return
 		}

@@ -92,6 +92,7 @@ aemeath dev --ts-out web/src/api    # also rewrite the TypeScript files after ev
 
 - It runs the compiled binary directly. On macOS and Linux it stops the server with `SIGTERM` and kills it if it is still there after 5 s, so the server can shut down gracefully; Windows has no `SIGTERM` for processes, so there the process is killed at once. Either way the port is free again.
 - If a build fails, the previous version keeps running until you fix the error.
+- It reads `.env` in the project folder (copy `.env.example`) and gives those variables to the server; a variable already set in your shell wins. Editing `.env` restarts the server. `aemeath ts` reads it too. Nothing else does: in production, set the variables on your platform.
 - Changes are debounced, new directories are watched, and `_test.go` files, hidden folders, `vendor`, `node_modules`, `tmp` and `uploads` are ignored.
 
 ### Help and tab completion
