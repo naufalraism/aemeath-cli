@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [0.7.0] - 2026-11-26
+
+Needs framework **v0.17.0** or later: `aemeath new` now writes it into `go.mod`; in an existing project run `go get github.com/naufalraism/aemeath@v0.17.0` before `aemeath generate`, which now checks it.
+
 - **The `RealIP` example in the generated `main.go` calls `aemeath.PrivateNetworks()`**, a function since framework v0.16.0; uncommenting the old `PrivateNetworks...` gave code that did not compile. The project build test now compiles every `app.*` example that `main.go` shows in a comment.
 
 - **`aemeath dev` and `aemeath ts` read `.env`.** A generated project ships `.env.example` saying "copy to .env", and `aemeath dev` restarted on every change to `.env`, but nothing read the file: the server never saw `PORT` or `DATABASE_URL` from it. They are now passed to the server; a variable already set in the shell wins, and a line that is not `KEY=value` stops the restart with its line number. The generated README no longer tells PostgreSQL and MySQL users to run `DATABASE_URL=... aemeath dev`, which does not work in PowerShell, and shows the PowerShell way to set `TEST_DATABASE_URL`.
